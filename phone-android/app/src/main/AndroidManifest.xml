@@ -41,6 +41,18 @@
             android:foregroundServiceType="microphone|phoneCall"
             android:exported="false"/>
 
+        <!-- Quick Settings Tile: ketuk dari notifikasi shade untuk memanggil jam -->
+        <service
+            android:name=".AgentCallTileService"
+            android:icon="@android:drawable/ic_btn_speak_now"
+            android:label="AI Agent"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
         <!-- Skema "tel" dipakai agar placeCall() diterima Telecom -->
         <activity-alias
             android:name=".SpikeAlias"

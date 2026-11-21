@@ -16,9 +16,13 @@ native, dan mengalirkan audio jam (SCO) ke gateway VPS.
 
 ```
 app/src/main/java/id/agentcall/
-├── WatchAudioRoute.kt          SCO routing + AudioRecord/AudioTrack (VOICE_COMMUNICATION)
+├── WatchAudioRoute.kt             SCO routing + AudioRecord/AudioTrack (VOICE_COMMUNICATION)
 ├── AgentCallConnectionService.kt  Telecom self-managed call -> layar panggilan di jam
-└── VoiceSessionManager.kt      WS transport + orkestrasi sesi
+├── VoiceSessionManager.kt         WS transport + orkestrasi sesi
+├── AgentCallTileService.kt        Quick Settings Tile (pemicu panggilan instan dari notifikasi)
+├── WatchBridge.kt                 Notifikasi + jembatan P2P ke jam
+├── WearEngineHelper.kt            P2P helper aman-runtime untuk HarmonyOS Lite
+└── SpikeEngine.kt                 Mesin verifikasi 7 langkah (S1–S7)
 ```
 
 ## AndroidManifest (potongan penting)
