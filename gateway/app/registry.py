@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from .adapters.base import AgentAdapter
 from .adapters.echo import EchoAgent
+from .adapters.gemini import GeminiAdapter
 from .adapters.http_generic import HttpAgentAdapter
 from .adapters.opencode import OpencodeAdapter
 
@@ -98,10 +99,12 @@ def build(agent_id: str, path: str | None = None) -> AgentAdapter:
                 token=os.environ.get(env.get("token_env", ""), ""),
                 openai=bool(env.get("openai_compat", False)),
             )
-        if spec.type == "gemini_live":
-            # Placeholder: implementasi S2S ada di app/adapters/gemini_live.py (Fase 2b)
-            log.warning("agent '%s' belum diimplementasikan; pakai echo", spec.id)
-            return EchoAgent()
+        if spec.type in ("gemini", "gemini_live"):
+            api_key = os.environ.get("GEMINI_API_KEY", "")
+            if not api_key:
+                log.warning("GEMINI_API_KEY belum diset; fallback ke echo")
+                return EchoAgent()
+            return GeminiAdapter(api_key=api_key, model=os.environ.get("GEMINI_MODEL"))
     except KeyError as e:
         log.warning("env %s belum diset untuk agent '%s'; fallback ke echo", e, spec.id)
         return EchoAgent()

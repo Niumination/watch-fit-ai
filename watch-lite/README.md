@@ -20,6 +20,8 @@ Suara selalu lewat HFP ke HP (lihat `docs/01-riset-dan-arsitektur.md §1.3–1.4
 1. DevEco Studio → New Project → Lite Wearable (Empty Feature Ability, JS)
 2. Salin halaman ini ke: entry/src/main/js/default/pages/index/
 3. Salin config.json      ke: entry/src/main/js/default/config.json
+   (sudah dilengkapi metaData.customizeData supportLists untuk otorisasi P2P)
+   File build-profile.json5 tersedia di root watch-lite/ untuk DevEco 3.1
    (apiVersion.compatible = 5, target = 6 — turunkan ke 4/5 kalau jam menolak)
 4. File → Project Structure → Signing Configs → pakai .p12 + .cer + .p7b debug-mu
 5. Build → Build Hap(s) → hasil: entry-signed.hap  (harus < 10 MB)

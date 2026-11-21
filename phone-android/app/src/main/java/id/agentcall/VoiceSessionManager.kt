@@ -124,14 +124,16 @@ object VoiceSessionManager {
     }
 }
 
-/** Tempat mendaftarkan PhoneAccount self-managed, dipanggil sekali di Application.onCreate. */
+/** Tempat mendaftarkan PhoneAccount self-managed, dipanggil sekali di Application.onCreate atau MainActivity. */
 object AgentCallApp {
     fun registerPhoneAccount(ctx: Context) {
-        // Lihat README: gunakan TelecomManager.registerPhoneAccount() dengan
-        // PhoneAccount.builder(handle, "AI Agent")
-        //   .setCapabilities(CAPABILITY_SELF_MANAGED)
-        //   .setSupportedUriSchemes(listOf("tel"))
-        //   .build()
-        // lalu bungkus dalam Intent ACTION_CHANGE_PHONE_ACCOUNTS agar user mengaktifkannya.
+        val telecom = ctx.getSystemService(Context.TELECOM_SERVICE) as? android.telecom.TelecomManager ?: return
+        val handle = phoneAccountHandle(ctx)
+        val account = android.telecom.PhoneAccount.builder(handle, "AI Agent (AgentCall)")
+            .setCapabilities(android.telecom.PhoneAccount.CAPABILITY_SELF_MANAGED)
+            .setSupportedUriSchemes(listOf("tel"))
+            .setShortDescription("Sesi suara dengan AI agent")
+            .build()
+        runCatching { telecom.registerPhoneAccount(account) }
     }
 }

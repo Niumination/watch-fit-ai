@@ -36,3 +36,10 @@ async def test_openai_compatible_adapter(mock_agents_url):
     a = HttpAgentAdapter("x", mock_agents_url, token="tok123", openai=True)
     text = await collect(a, "halo")
     assert "OpenAI-compat" in text
+
+
+async def test_gemini_adapter_without_key_warns():
+    from app.adapters.gemini import GeminiAdapter
+    a = GeminiAdapter(api_key="")
+    text = await collect(a, "halo")
+    assert "GEMINI_API_KEY belum diset" in text

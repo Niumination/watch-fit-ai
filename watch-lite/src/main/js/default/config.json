@@ -19,7 +19,9 @@
     }
   },
   "module": {
-    "deviceType": ["liteWearable"],
+    "deviceType": [
+      "liteWearable"
+    ],
     "distro": {
       "deliveryWithInstall": true
     },
@@ -33,7 +35,9 @@
         "visible": true,
         "skills": [
           {
-            "actions": ["action.system.home"]
+            "actions": [
+              "action.system.home"
+            ]
           }
         ]
       }
@@ -41,11 +45,22 @@
     "js": [
       {
         "name": "default",
-        "pages": ["pages/index/index"],
+        "pages": [
+          "pages/index/index"
+        ],
         "window": {
           "designWidth": 480
         }
       }
-    ]
+    ],
+    "metaData": {
+      "customizeData": [
+        {
+          "name": "supportLists",
+          "value": "id.agentcall:GANTI_DENGAN_FINGERPRINT_APP_ANDROID",
+          "extra": ""
+        }
+      ]
+    }
   }
 }
