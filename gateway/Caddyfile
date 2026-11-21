@@ -1,0 +1,13 @@
+voice.domainmu.com {
+    encode zstd gzip
+    @ws {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @ws gateway:8080
+    reverse_proxy gateway:8080
+    log {
+        output stdout
+        format console
+    }
+}

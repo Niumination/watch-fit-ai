@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 780" width="1180" height="780" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0d1220"/>
+      <stop offset="100%" stop-color="#121a2c"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/>
+    </marker>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa"/>
+    </marker>
+    <style>
+      .lbl { fill:#e6edf7; font-size:13px; }
+      .dim { fill:#8fa3bf; font-size:11.5px; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .title { fill:#f8fafc; font-size:19px; font-weight:700; }
+      .h { fill:#cfe3ff; font-size:13.5px; font-weight:700; letter-spacing:.3px; }
+      .box { fill:#16203a; stroke:#2c3d61; stroke-width:1.2; rx:10; }
+      .box-hi { fill:#1b2c4d; stroke:#4b7fd4; stroke-width:1.6; }
+      .pill { fill:#0f172a; stroke:#33456a; }
+    </style>
+  </defs>
+
+  <rect width="1180" height="780" fill="url(#bg)"/>
+  <text x="32" y="42" class="title">Skema: Bicara dengan AI Agent dari HUAWEI WATCH FIT 5</text>
+  <text x="32" y="64" class="dim">Jam = headset + tombol. HP = audio &amp; sesi. VPS = otak suara &amp; agent. (Jalur B + C)</text>
+
+  <!-- ================= LAYER 1: WATCH ================= -->
+  <rect x="32" y="88" width="252" height="300" class="box box-hi"/>
+  <text x="48" y="114" class="h">1 · WATCH FIT 5</text>
+  <text x="48" y="132" class="dim">lite wearable · HarmonyOS Lite</text>
+
+  <rect x="48" y="146" width="220" height="54" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="60" y="167" class="lbl">🎤 Mic + 🔊 Speaker</text>
+  <text x="60" y="185" class="dim">HFP / SCO — jalur audio utama</text>
+
+  <rect x="48" y="208" width="220" height="54" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="60" y="229" class="lbl">📞 Layar panggilan native</text>
+  <text x="60" y="247" class="dim">jawab / tutup dari pergelangan</text>
+
+  <rect x="48" y="270" width="220" height="66" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="60" y="291" class="lbl">📱 App lite (opsional)</text>
+  <text x="60" y="309" class="dim">Tombol Talk · pilih agent ·</text>
+  <text x="60" y="324" class="dim">transkrip · getar (JS ES5, ≤48KB)</text>
+
+  <text x="48" y="362" class="dim" fill="#f59e0b">✗ tanpa API mic / audio / Wi-Fi</text>
+  <text x="48" y="377" class="dim" fill="#f59e0b">✗ tanpa background / WebSocket</text>
+
+  <!-- ================= LAYER 2: PHONE ================= -->
+  <rect x="316" y="88" width="300" height="300" class="box box-hi"/>
+  <text x="332" y="114" class="h">2 · HP ANDROID — app "AgentCall"</text>
+  <text x="332" y="132" class="dim">Kotlin · foreground service</text>
+
+  <rect x="332" y="146" width="268" height="44" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="344" y="164" class="lbl">Telecom ConnectionService</text>
+  <text x="344" y="180" class="dim">self-managed call → UI di jam</text>
+
+  <rect x="332" y="196" width="268" height="44" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="344" y="214" class="lbl">AudioRouter → SCO</text>
+  <text x="344" y="230" class="dim">setCommunicationDevice(TYPE_BT_SCO)</text>
+
+  <rect x="332" y="246" width="268" height="44" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="344" y="264" class="lbl">AudioIo</text>
+  <text x="344" y="280" class="dim mono">AudioRecord / AudioTrack 16 kHz</text>
+
+  <rect x="332" y="296" width="268" height="44" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="344" y="314" class="lbl">WsTransport + AgentPicker</text>
+  <text x="344" y="330" class="dim">PCM/Opus in · JSON event out</text>
+
+  <text x="332" y="362" class="dim" fill="#f59e0b">⚠ butuh HMS Core + Huawei Health utk Wear Engine</text>
+  <text x="332" y="377" class="dim" fill="#f59e0b">⚠ layar menyala / FGS mic saat start</text>
+
+  <!-- ================= LAYER 3: GATEWAY ================= -->
+  <rect x="648" y="88" width="300" height="300" class="box box-hi"/>
+  <text x="664" y="114" class="h">3 · VPS GATEWAY — voice.domainmu.com</text>
+  <text x="664" y="132" class="dim">FastAPI + Pipecat · Docker · Caddy TLS</text>
+
+  <rect x="664" y="146" width="268" height="40" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="676" y="163" class="lbl">Transport WSS + Auth (JWT/device)</text>
+  <text x="676" y="178" class="dim">sesi, kuota, timeout, audit</text>
+
+  <rect x="664" y="192" width="268" height="40" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="676" y="209" class="lbl">VAD + Turn detection + Barge-in</text>
+  <text x="676" y="224" class="dim">Silero VAD · Smart Turn</text>
+
+  <rect x="664" y="238" width="268" height="40" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="676" y="255" class="lbl">ASR → Router → Voice Formatter</text>
+  <text x="676" y="270" class="dim">ringkas output panjang → 2–4 kalimat</text>
+
+  <rect x="664" y="284" width="268" height="40" rx="8" fill="#0f1a30" stroke="#33456a"/>
+  <text x="676" y="301" class="lbl">TTS streaming per kalimat</text>
+  <text x="676" y="316" class="dim">Gemini TTS / OpenAI / Piper (self-host)</text>
+
+  <text x="664" y="348" class="dim" fill="#7dd3fc">Mode S2S: Gemini Live ≈ $0,023/menit</text>
+  <text x="664" y="364" class="dim" fill="#7dd3fc">Mode cascade: STT → agent teks → TTS</text>
+  <text x="664" y="380" class="dim" fill="#f59e0b">Taruh VPS di SG / JKT: 30–70 ms vs 180–260 ms</text>
+
+  <!-- ================= LAYER 4: AGENTS ================= -->
+  <rect x="980" y="88" width="168" height="300" class="box"/>
+  <text x="996" y="114" class="h">4 · AGENT</text>
+  <text x="996" y="132" class="dim">sudah ada di VPS</text>
+
+  <rect x="996" y="146" width="136" height="46" rx="8" fill="#101a2e" stroke="#33456a"/>
+  <text x="1008" y="166" class="lbl">opencode</text>
+  <text x="1008" y="182" class="dim">HTTP /session + SSE</text>
+
+  <rect x="996" y="200" width="136" height="46" rx="8" fill="#101a2e" stroke="#33456a"/>
+  <text x="1008" y="220" class="lbl">deepseek-harness</text>
+  <text x="1008" y="236" class="dim">adapter HTTP</text>
+
+  <rect x="996" y="254" width="136" height="46" rx="8" fill="#101a2e" stroke="#33456a"/>
+  <text x="1008" y="274" class="lbl">openmausbot</text>
+  <text x="1008" y="290" class="dim">adapter HTTP</text>
+
+  <rect x="996" y="308" width="136" height="46" rx="8" fill="#101a2e" stroke="#33456a"/>
+  <text x="1008" y="328" class="lbl">Gemini Live</text>
+  <text x="1008" y="344" class="dim">S2S native audio</text>
+
+  <!-- ================= ARROWS ================= -->
+  <!-- watch <-> phone -->
+  <line x1="284" y1="176" x2="316" y2="176" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <text x="286" y="166" class="dim" fill="#7dd3fc">HFP</text>
+  <text x="286" y="196" class="dim" fill="#7dd3fc">SCO</text>
+
+  <line x1="284" y1="300" x2="316" y2="300" stroke="#a78bfa" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrow3)" marker-start="url(#arrow3)"/>
+  <text x="278" y="330" class="dim" fill="#a78bfa">P2P</text>
+
+  <!-- phone <-> gateway -->
+  <line x1="616" y1="220" x2="648" y2="220" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <text x="612" y="210" class="dim" fill="#7dd3fc">WSS</text>
+  <text x="606" y="238" class="dim" fill="#7dd3fc">TLS</text>
+
+  <!-- gateway <-> agents -->
+  <line x1="948" y1="200" x2="980" y2="180" stroke="#fbbf24" stroke-width="1.8" marker-end="url(#arrow2)"/>
+  <line x1="948" y1="240" x2="980" y2="228" stroke="#fbbf24" stroke-width="1.8" marker-end="url(#arrow2)"/>
+  <line x1="948" y1="290" x2="980" y2="278" stroke="#fbbf24" stroke-width="1.8" marker-end="url(#arrow2)"/>
+  <text x="950" y="330" class="dim" fill="#fbbf24">HTTP / SSE</text>
+
+  <!-- ================= SESSION FLOW ================= -->
+  <rect x="32" y="412" width="1116" height="196" rx="12" fill="#0f1626" stroke="#23324f"/>
+  <text x="48" y="438" class="h">Alur sesi (happy path)</text>
+
+  <g font-size="12">
+    <rect x="48" y="452" width="150" height="34" rx="17" class="pill"/>
+    <text x="64" y="474" class="lbl">1 Tekan "Talk" di jam</text>
+
+    <rect x="210" y="452" width="176" height="34" rx="17" class="pill"/>
+    <text x="226" y="474" class="lbl">2 Telecom: call + SCO ke jam</text>
+
+    <rect x="398" y="452" width="164" height="34" rx="17" class="pill"/>
+    <text x="414" y="474" class="lbl">3 WSS auth → sesi</text>
+
+    <rect x="574" y="452" width="176" height="34" rx="17" class="pill"/>
+    <text x="590" y="474" class="lbl">4 Mic jam → VAD → ASR</text>
+
+    <rect x="762" y="452" width="176" height="34" rx="17" class="pill"/>
+    <text x="778" y="474" class="lbl">5 Router → agent adapter</text>
+
+    <rect x="950" y="452" width="182" height="34" rx="17" class="pill"/>
+    <text x="966" y="474" class="lbl">6 Formatter → TTS</text>
+  </g>
+
+  <g font-size="12">
+    <rect x="48" y="502" width="196" height="34" rx="17" class="pill"/>
+    <text x="64" y="524" class="lbl">7 Speaker jam (call UI)</text>
+
+    <rect x="256" y="502" width="220" height="34" rx="17" class="pill"/>
+    <text x="272" y="524" class="lbl">8 Barge-in: AI berhenti &lt;200 ms</text>
+
+    <rect x="488" y="502" width="196" height="34" rx="17" class="pill"/>
+    <text x="504" y="524" class="lbl">9 Transkrip → HP → jam</text>
+
+    <rect x="696" y="502" width="216" height="34" rx="17" class="pill"/>
+    <text x="712" y="524" class="lbl">10 Tutup / timeout 60 s hening</text>
+  </g>
+
+  <text x="48" y="566" class="dim">Target latensi end-to-end &lt; 1,2 s · VAD 200–500 ms · Agent TTFT 300–900 ms · TTS TTFB 150–400 ms</text>
+  <text x="48" y="586" class="dim">Barge-in dua lapis: gate mic saat TTS (semi-duplex) + AEC3 di gateway (full-duplex)</text>
+
+  <!-- ================= OPTIONS ================= -->
+  <rect x="32" y="628" width="1116" height="126" rx="12" fill="#0f1626" stroke="#23324f"/>
+  <text x="48" y="654" class="h">Empat jalur — pilih sesuai tahap</text>
+
+  <rect x="48" y="666" width="262" height="72" rx="9" fill="#101a2e" stroke="#33456a"/>
+  <text x="62" y="686" class="lbl">A · Nomor telepon AI (1–2 hari)</text>
+  <text x="62" y="704" class="dim">Twilio/Telnyx → SIP → LiveKit/Pipecat</text>
+  <text x="62" y="720" class="dim">8 kHz · $0,03–0,10/mnt · nol koding di jam</text>
+
+  <rect x="324" y="666" width="262" height="72" rx="9" fill="#1b2c4d" stroke="#4b7fd4" stroke-width="1.6"/>
+  <text x="338" y="686" class="lbl">B · App Android + HFP ⭐ (2–4 mgg)</text>
+  <text x="338" y="704" class="dim">Telecom call → SCO → WSS gateway</text>
+  <text x="338" y="720" class="dim">kontrol penuh · tanpa biaya telepon</text>
+
+  <rect x="600" y="666" width="262" height="72" rx="9" fill="#101a2e" stroke="#33456a"/>
+  <text x="614" y="686" class="lbl">C · B + app lite di jam (+1–2 mgg)</text>
+  <text x="614" y="704" class="dim">Wear Engine P2P · tombol &amp; transkrip</text>
+  <text x="614" y="720" class="dim">risiko: API level / sideload</text>
+
+  <rect x="876" y="666" width="256" height="72" rx="9" fill="#101a2e" stroke="#5b4a2a"/>
+  <text x="890" y="686" class="lbl" fill="#fbbf24">D · Hack app Gemini (tidak disarankan)</text>
+  <text x="890" y="704" class="dim">tanpa API resmi · audio tak dijamin</text>
+  <text x="890" y="720" class="dim">pakai Gemini Live API langsung</text>
+
+  <text x="32" y="772" class="dim">Detail lengkap + sitasi: docs/01-riset-dan-arsitektur.md</text>
+</svg>

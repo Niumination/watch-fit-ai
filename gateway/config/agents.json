@@ -1,0 +1,49 @@
+{
+  "default": "opencode",
+  "agents": [
+    {
+      "id": "opencode",
+      "label": "opencode",
+      "type": "opencode",
+      "aliases": ["opencode", "open code", "kode", "coding", "code"],
+      "base_url_env": "OPENCODE_URL",
+      "password_env": "OPENCODE_PASSWORD",
+      "model_env": "OPENCODE_MODEL",
+      "hint": "agent coding di VPS; jawaban panjang, minta versi lisan singkat"
+    },
+    {
+      "id": "deepseek-harness",
+      "label": "deepseek harness",
+      "type": "http",
+      "aliases": ["deepseek", "deep seek", "harness", "deepseek-harness"],
+      "url_env": "DEEPSEEK_HARNESS_URL",
+      "token_env": "DEEPSEEK_HARNESS_TOKEN",
+      "openai_compat": false,
+      "hint": "agent penalaran; jawaban analitis"
+    },
+    {
+      "id": "openmausbot",
+      "label": "openmausbot",
+      "type": "http",
+      "aliases": ["openmausbot", "maus", "mausbot", "open maus"],
+      "url_env": "OPENMAUSBOT_URL",
+      "token_env": "OPENMAUSBOT_TOKEN",
+      "openai_compat": false,
+      "hint": "bot serba bisa"
+    },
+    {
+      "id": "gemini",
+      "label": "gemini",
+      "type": "gemini_live",
+      "aliases": ["gemini", "google", "gemini live"],
+      "hint": "percakapan cepat, low latency (butuh GEMINI_API_KEY)"
+    },
+    {
+      "id": "echo",
+      "label": "echo",
+      "type": "echo",
+      "aliases": ["echo", "tes", "test", "uji"],
+      "hint": "agent uji untuk validasi jalur audio"
+    }
+  ]
+}

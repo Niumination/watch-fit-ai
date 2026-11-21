@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pratinjau UI — WATCH FIT 5 + AgentCall</title>
+</head>
+<body style="margin:0;background:#0b0f1a;color:#e6edf7;font-family:ui-sans-serif,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">
+
+<div style="max-width:1180px;margin:0 auto;padding:36px 24px 56px;">
+
+  <h1 style="font-size:24px;margin:0 0 6px;">Pratinjau UI — dari pergelangan ke agent</h1>
+  <p style="color:#8fa3bf;font-size:14px;margin:0 0 32px;line-height:1.6;">
+    Simulasi tampilan app lite di <strong style="color:#cfe3ff;">WATCH FIT 5</strong> (layar 480×408, AMOLED).
+    Ini bukan screenshot — ini mock statis untuk menyepakati desain interaksi sebelum menulis HML/JS.
+    Audio tidak pernah lewat app ini: suara selalu lewat HFP ke HP.
+  </p>
+
+  <!-- ================= 3 WATCH SCREENS ================= -->
+  <div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;">
+
+    <!-- ---------- SCREEN 1: IDLE ---------- -->
+    <div>
+      <div style="width:300px;height:255px;background:#000;border:10px solid #1b2333;border-radius:44px;box-shadow:0 14px 40px rgba(0,0,0,.6);position:relative;overflow:hidden;">
+        <div style="padding:16px 14px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+          <div style="font-size:11px;color:#9aa7bd;letter-spacing:.4px;">SIAP</div>
+          <div style="font-size:19px;font-weight:700;margin-top:2px;">opencode</div>
+          <div style="margin-top:14px;width:120px;height:120px;border-radius:60px;background:radial-gradient(circle at 50% 40%,#3ddc97,#158a63);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(61,220,151,.12);">
+            <span style="font-size:13px;font-weight:700;color:#00120c;">BICARA</span>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <div style="padding:6px 12px;border-radius:14px;background:#23324f;font-size:11px;color:#dbe7f9;">◀ agent</div>
+            <div style="padding:6px 12px;border-radius:14px;background:#23324f;font-size:11px;color:#dbe7f9;">tutup</div>
+          </div>
+          <div style="margin-top:auto;font-size:10px;color:#4c5b76;">mic &amp; speaker lewat Bluetooth</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:#cfe3ff;font-weight:600;">1 · Idle</div>
+      <div style="font-size:12px;color:#8fa3bf;margin-top:4px;max-width:300px;line-height:1.5;">Tiga tombol besar saja. Tidak ada menu bertingkat — lite-JS tanpa back-stack.</div>
+    </div>
+
+    <!-- ---------- SCREEN 2: LISTENING ---------- -->
+    <div>
+      <div style="width:300px;height:255px;background:#000;border:10px solid #1b2333;border-radius:44px;box-shadow:0 14px 40px rgba(0,0,0,.6);position:relative;overflow:hidden;">
+        <div style="padding:16px 14px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+          <div style="font-size:11px;color:#fbbf24;letter-spacing:.4px;">MENDENGAR…</div>
+          <div style="font-size:19px;font-weight:700;margin-top:2px;">opencode</div>
+          <div style="margin-top:14px;width:120px;height:120px;border-radius:60px;background:radial-gradient(circle at 50% 40%,#ffd166,#c98a12);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(251,191,36,.15);">
+            <span style="font-size:13px;font-weight:700;color:#1a1200;">BICARA</span>
+          </div>
+          <!-- level meter -->
+          <div style="margin-top:12px;width:190px;height:6px;background:#1f2a44;border-radius:3px;overflow:hidden;">
+            <div style="width:62%;height:100%;background:linear-gradient(90deg,#3ddc97,#fbbf24);"></div>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:#cfe3ff;text-align:center;max-width:230px;">
+            “cek status deploy hari ini”
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:#cfe3ff;font-weight:600;">2 · Mendengar</div>
+      <div style="font-size:12px;color:#8fa3bf;margin-top:4px;max-width:300px;line-height:1.5;">Level meter dari event <code style="color:#7dd3fc;">{"t":"level"}</code> — konfirmasi visual bahwa mic jam aktif.</div>
+    </div>
+
+    <!-- ---------- SCREEN 3: ANSWER ---------- -->
+    <div>
+      <div style="width:300px;height:255px;background:#000;border:10px solid #1b2333;border-radius:44px;box-shadow:0 14px 40px rgba(0,0,0,.6);position:relative;overflow:hidden;">
+        <div style="padding:16px 14px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+          <div style="font-size:11px;color:#7dd3fc;letter-spacing:.4px;">BICARA…</div>
+          <div style="font-size:19px;font-weight:700;margin-top:2px;">opencode</div>
+          <div style="margin-top:10px;font-size:12px;color:#cfe3ff;text-align:center;line-height:1.5;max-width:250px;">
+            Deploy terakhir sukses 2 jam lalu. Ada 3 peringatan di log, semuanya soal timeout cache.
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px;">
+            <div style="padding:5px 10px;border-radius:12px;background:#23324f;font-size:10px;color:#dbe7f9;">detail di HP</div>
+            <div style="padding:5px 10px;border-radius:12px;background:#5a1f1f;font-size:10px;color:#ffd7d7;">akhiri</div>
+          </div>
+          <div style="margin-top:auto;font-size:10px;color:#4c5b76;">getar singkat saat jawaban siap</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:#cfe3ff;font-weight:600;">3 · Jawaban</div>
+      <div style="font-size:12px;color:#8fa3bf;margin-top:4px;max-width:300px;line-height:1.5;">Dibacakan 2–4 kalimat saja (Voice Formatter), detail penuh tetap bisa dibaca di HP.</div>
+    </div>
+
+  </div>
+
+  <!-- ================= PHONE SIDE ================= -->
+  <div style="margin-top:44px;padding:24px;background:#101a2e;border:1px solid #23324f;border-radius:14px;">
+    <div style="font-size:14px;font-weight:700;color:#cfe3ff;margin-bottom:14px;">Di HP, sesi ini terlihat sebagai panggilan — itu sumber tombol jawab/tutup di jam</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:#8fa3bf;line-height:1.7;">
+      <div style="flex:1;min-width:260px;">
+        <div style="color:#e6edf7;font-weight:600;margin-bottom:6px;">Yang tampil di jam</div>
+        Layar panggilan native (dari <code style="color:#7dd3fc;">self-managed ConnectionService</code>):
+        nama pemanggil "AI Agent", tombol jawab/tutup, indikator mikrofon.
+      </div>
+      <div style="flex:1;min-width:260px;">
+        <div style="color:#e6edf7;font-weight:600;margin-bottom:6px;">Yang tidak terlihat</div>
+        Route SCO, streaming WSS ke gateway, VAD/ASR/TTS, adapter agent — semua di HP + VPS,
+        tidak menyentuh jam dan tidak menguras baterai jam lebih dari panggilan biasa.
+      </div>
+      <div style="flex:1;min-width:260px;">
+        <div style="color:#e6edf7;font-weight:600;margin-bottom:6px;">Kalau app lite gagal dipasang</div>
+        Rencana B: notifikasi bertombol (Bicara / Ganti agent / Tutup) + Quick Settings tile.
+        Audio tetap dari jam; hanya tombol mulai yang pindah ke HP.
+      </div>
+    </div>
+  </div>
+
+  <p style="color:#4c5b76;font-size:11px;margin-top:28px;line-height:1.6;">
+    Batasan desain yang dipatuhi mock ini: ES5 (tanpa let/arrow/template literal) · ≤48 KB per halaman ·
+    tanpa back-stack (tombol kembali disediakan sendiri) · tanpa audio/mic API · tanpa Wi-Fi ·
+    tanpa background. Rujukan: docs/01-riset-dan-arsitektur.md §1.3 dan watch-lite/README.md.
+  </p>
+
+</div>
+</body>
+</html>

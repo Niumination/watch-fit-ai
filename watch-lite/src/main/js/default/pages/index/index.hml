@@ -1,0 +1,20 @@
+<div class="page">
+  <div class="status">{{state}}</div>
+
+  <div class="agent">{{agentLabel}}</div>
+
+  <div class="row">
+    <button class="big primary" onclick="onTalk">{{talkLabel}}</button>
+  </div>
+
+  <div class="row">
+    <button class="small" onclick="onPrev">◀ Agent</button>
+    <button class="small" onclick="onEnd">Tutup</button>
+  </div>
+
+  <div class="transcript" if="{{transcript}}">{{transcript}}</div>
+  <div class="hint" if="{{!connected}}">Buka app AgentCall di HP</div>
+  <div class="level" if="{{listening}}">
+    <div class="bar" style="width: {{level}}%;"></div>
+  </div>
+</div>

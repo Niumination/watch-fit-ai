@@ -1,0 +1,36 @@
+services:
+  gateway:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    expose: ["8080"]
+    volumes:
+      - ./models:/models:ro
+    # CPU 2 vCPU cukup untuk ~3 sesi paralel (VAD + whisper small + piper)
+    networks: [agentnet]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["443:443", "80:80"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [gateway]
+    networks: [agentnet]
+
+  # agent kamu: JANGAN expose port-nya ke internet.
+  # opencode (contoh):
+  # opencode:
+  #   image: ghcr.io/sst/opencode:latest
+  #   command: ["serve", "--hostname", "0.0.0.0", "--port", "4096"]
+  #   environment:
+  #     OPENCODE_SERVER_PASSWORD: ${OPENCODE_PASSWORD}
+  #   volumes: ["./workdir:/work"]
+  #   networks: [agentnet]
+
+volumes:
+  caddy_data:
+
+networks:
+  agentnet:

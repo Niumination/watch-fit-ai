@@ -1,0 +1,29 @@
+.page {
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 12px;
+}
+.status { font-size: 14px; color: #9aa7bd; }
+.agent  { font-size: 20px; color: #ffffff; margin-top: 4px; font-weight: bold; }
+.row { width: 100%; flex-direction: row; justify-content: center; align-items: center; margin-top: 8px; }
+.big {
+  width: 150px; height: 52px; border-radius: 26px;
+  font-size: 20px; color: #001018; background-color: #34d399;
+}
+.big.active { background-color: #fbbf24; }
+.primary { font-weight: bold; }
+.small {
+  width: 110px; height: 40px; border-radius: 20px; margin-left: 6px; margin-right: 6px;
+  font-size: 15px; color: #e5eefc; background-color: #23324f;
+}
+.transcript {
+  width: 90%; margin-top: 10px; font-size: 14px; color: #cfe3ff;
+  text-align: center; max-lines: 4;
+}
+.hint { margin-top: 8px; font-size: 12px; color: #f87171; }
+.level { width: 70%; height: 4px; margin-top: 8px; background-color: #1f2a44; }
+.bar { height: 4px; background-color: #34d399; }
