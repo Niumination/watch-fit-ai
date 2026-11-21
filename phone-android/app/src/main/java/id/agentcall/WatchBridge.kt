@@ -41,11 +41,13 @@ object WatchBridge {
             .build()
         nm(ctx).notify(ID, n)
         Log.i(TAG, "transcript: $text")
-        // TODO (Jalur C): WearEngineHelper.sendMessageToWatch("""{"t":"final","text":"..."}""")
+        // Jalur C (app lite di jam): kirim transkrip ke UI jam via P2P
+        WearEngineHelper.sendToWatch(ctx, """{"t":"final","text":${org.json.JSONObject.quote(text)}}""")
     }
 
     fun pushState(ctx: Context, state: String) {
         Log.i(TAG, "state: $state")
-        // TODO (Jalur C): kirim {"t":"state","v":"..."} via Wear Engine P2P
+        // Jalur C (app lite di jam): update status lingkaran animasi / VU meter
+        WearEngineHelper.sendToWatch(ctx, """{"t":"state","v":"$state"}""")
     }
 }

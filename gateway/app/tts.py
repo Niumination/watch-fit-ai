@@ -1,24 +1,29 @@
 """Text-to-speech -> stream PCM16 mono.
 
 Urutan backend (pilih lewat env TTS_BACKEND):
-  piper  : self-host, offline, latensi paling rendah  (rekomendasi produksi)
-  edge   : gratis, kualitas bagus, butuh internet
-  gemini : suara paling natural, ~$9-12/1M token audio
-  null   : hening (untuk uji jalur audio saja)
+  piper  : self-host, offline, latensi paling rendah  (rekomendasi VPS)
+  openai : cloud cepat (~300-500 ms), suara natural (butuh OPENAI_API_KEY)
+  gemini : suara natural, multimodal
+  edge   : gratis, kualitas bagus (butuh internet & edge-tts)
+  tone   : nada 440 Hz (untuk uji koneksi & audio loopback tanpa API key)
+  null   : hening
 """
 from __future__ import annotations
 
 import asyncio
 import io
+import logging
 import os
 import shutil
 import wave
 from typing import AsyncIterator
 
+import httpx
+
 from . import dsp
 
-_BACKEND = os.environ.get("TTS_BACKEND", "piper")
-_PIPER_VOICE = os.environ.get("PIPER_VOICE", "id_ID-...")  # unduh voice .onnx Indonesia
+log = logging.getLogger("gateway.tts")
+
 _CHUNK = 4096
 
 
@@ -29,23 +34,49 @@ async def stream_pcm16(text: str, sample_rate: int = 16_000) -> AsyncIterator[by
 
 
 async def _synth_wav(text: str) -> bytes:
-    if _BACKEND == "null":
+    backend = os.environ.get("TTS_BACKEND", "tone").lower()
+
+    if backend == "null":
         return _silence_wav(0.3)
-    if _BACKEND == "tone":
+    if backend == "tone":
         # nada 440 Hz sepanjang ~panjang teks: cukup untuk membuktikan audio kembali ke HP
         return _tone_wav(min(3.0, 0.4 + len(text) / 40.0))
-    if _BACKEND == "piper" and shutil.which("piper"):
+    if backend == "openai":
+        return await _openai(text)
+    if backend == "piper" and shutil.which("piper"):
         return await _piper(text)
-    if _BACKEND in ("edge", "piper"):
+    if backend in ("edge", "piper"):
         return await _edge(text)
-    if _BACKEND == "gemini":
+    if backend == "gemini":
         return await _gemini(text)
     return _silence_wav(0.3)
 
 
+async def _openai(text: str) -> bytes:
+    key = os.environ.get("OPENAI_API_KEY", "")
+    if not key:
+        log.warning("OPENAI_API_KEY belum diset; fallback ke nada")
+        return _tone_wav(0.5)
+    url = os.environ.get("OPENAI_TTS_URL", "https://api.openai.com/v1/audio/speech")
+    voice = os.environ.get("OPENAI_TTS_VOICE", "alloy")
+    model = os.environ.get("OPENAI_TTS_MODEL", "tts-1")
+    body = {
+        "model": model,
+        "input": text,
+        "voice": voice,
+        "response_format": "wav",
+    }
+    headers = {"Authorization": f"Bearer {key}"}
+    async with httpx.AsyncClient(timeout=20) as c:
+        r = await c.post(url, json=body, headers=headers)
+        r.raise_for_status()
+        return r.content
+
+
 async def _piper(text: str) -> bytes:
+    model = os.environ.get("PIPER_MODEL", "")
     proc = await asyncio.create_subprocess_exec(
-        "piper", "--model", os.environ["PIPER_MODEL"], "--output_file", "-",
+        "piper", "--model", model, "--output_file", "-",
         stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
     )
     out, _ = await proc.communicate(text.encode())
@@ -53,27 +84,43 @@ async def _piper(text: str) -> bytes:
 
 
 async def _edge(text: str) -> bytes:
-    import edge_tts
+    try:
+        import edge_tts
+    except ImportError:
+        log.warning("edge_tts belum terpasang; fallback ke nada")
+        return _tone_wav(0.5)
+
     voice = os.environ.get("EDGE_VOICE", "id-ID-ArdiNeural")
     buf = bytearray()
     comm = edge_tts.Communicate(text, voice)
     async for chunk in comm.stream():
         if chunk["type"] == "audio":
             buf.extend(chunk["data"])
-    return bytes(buf)  # mp3 -> di produksi decode ke PCM (ffmpeg/av)
+
+    # edge_tts menghasilkan mp3; bila ffmpeg tersedia kita decode ke WAV
+    if shutil.which("ffmpeg"):
+        proc = await asyncio.create_subprocess_exec(
+            "ffmpeg", "-i", "pipe:0", "-f", "wav", "-ar", "24000", "-ac", "1", "pipe:1",
+            stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL
+        )
+        wav_out, _ = await proc.communicate(bytes(buf))
+        return wav_out
+    return bytes(buf)
 
 
 async def _gemini(text: str) -> bytes:
     import base64
-    import httpx
-    key = os.environ["GEMINI_API_KEY"]
+    key = os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        log.warning("GEMINI_API_KEY belum diset")
+        return _tone_wav(0.5)
     model = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
     body = {
         "contents": [{"parts": [{"text": text}]}],
         "generationConfig": {"responseModalities": ["AUDIO"]},
     }
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-    async with httpx.AsyncClient(timeout=60) as c:
+    async with httpx.AsyncClient(timeout=20) as c:
         r = await c.post(url, json=body)
         r.raise_for_status()
         data = r.json()["candidates"][0]["content"]["parts"][0]["inlineData"]["data"]
@@ -89,7 +136,9 @@ def _tone_wav(sec: float, freq: float = 440.0, rate: int = 24_000) -> bytes:
     )
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
         w.writeframes(frames)
     return buf.getvalue()
 
@@ -97,15 +146,25 @@ def _tone_wav(sec: float, freq: float = 440.0, rate: int = 24_000) -> bytes:
 def _silence_wav(sec: float, rate: int = 24_000) -> bytes:
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate)
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
         w.writeframes(b"\x00\x00" * int(rate * sec))
     return buf.getvalue()
 
 
 async def _wav_to_pcm(wav: bytes, target_rate: int) -> AsyncIterator[bytes]:
-    with wave.open(io.BytesIO(wav), "rb") as w:
-        sr = w.getframerate()
-        frames = w.readframes(w.getnframes())
+    try:
+        with wave.open(io.BytesIO(wav), "rb") as w:
+            sr = w.getframerate()
+            frames = w.readframes(w.getnframes())
+    except Exception as e:
+        log.warning("Gagal parse WAV (%s); stream nada darurat", e)
+        wav = _tone_wav(0.4, rate=target_rate)
+        with wave.open(io.BytesIO(wav), "rb") as w:
+            sr = w.getframerate()
+            frames = w.readframes(w.getnframes())
+
     if sr != target_rate:
         frames = dsp.ratecv(frames, 2, 1, sr, target_rate)
     for i in range(0, len(frames), _CHUNK):

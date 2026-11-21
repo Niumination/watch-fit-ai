@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 
 from .adapters.base import AgentAdapter
 from .adapters.echo import EchoAgent
-from . import auth, tts, asr, formatter, dsp, registry, router
+from . import auth, tts, asr, formatter, dsp, registry, router, vad
 
 log = logging.getLogger("gateway")
 logging.basicConfig(level=logging.INFO)
@@ -44,12 +44,14 @@ class Session:
     agent: AgentAdapter | None = None
     speaking: bool = False            # TTS sedang diputar -> untuk gating barge-in
     muted: bool = False
-    pcm: bytearray = field(default_factory=bytearray)
-    silence_ms: int = 0
     started_at: float = field(default_factory=time.time)
     turn_lock: asyncio.Lock = field(default_factory=asyncio.Lock)
+    vad_engine: vad.BaseVad = field(default_factory=lambda: vad.create_vad(sample_rate=16_000))
 
-    # --- VAD sederhana berbasis energi; produksi: Silero VAD (ONNX, ~1 ms/frame) ---
+    def __post_init__(self):
+        if self.rate != 16_000:
+            self.vad_engine = vad.create_vad(sample_rate=self.rate)
+
     @property
     def frame_bytes(self) -> int:
         """20 ms PCM16 mono pada rate sesi (640 byte @16k, 320 byte @8k)."""
@@ -59,22 +61,7 @@ class Session:
         """Proses per frame 20 ms — penting: satu pesan WS bisa berisi banyak frame."""
         if self.muted or not chunk:
             return None
-        fb = self.frame_bytes
-        utterance = None
-        for i in range(0, len(chunk) - fb + 1, fb):
-            frame = chunk[i:i + fb]
-            if dsp.rms(frame, 2) > 500:
-                self.pcm.extend(frame)
-                self.silence_ms = 0
-            elif self.pcm:
-                self.pcm.extend(frame)
-                self.silence_ms += 20
-                if self.silence_ms >= 600:      # 600 ms hening = akhir giliran
-                    utterance = bytes(self.pcm)
-                    self.pcm.clear()
-                    self.silence_ms = 0
-                    break
-        return utterance
+        return self.vad_engine.feed(chunk)
 
 
 @app.get("/healthz")
@@ -122,6 +109,7 @@ async def ws_voice(ws: WebSocket, token: str = Query(default="")):
 
             if kind == "hello":
                 s.rate = int(ctrl.get("rate", 16_000))
+                s.vad_engine = vad.create_vad(sample_rate=s.rate)
                 s.agent_name = ctrl.get("agent") or registry.default_agent()
                 s.agent = build_agent(s.agent_name, session_id=f"{device}-{int(time.time())}")
                 await send_state("listening")
