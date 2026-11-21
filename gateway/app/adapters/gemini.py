@@ -1,4 +1,4 @@
-"""Adapter untuk Gemini (Google AI Studio) via SSE streaming API.
+"""Adapter untuk Gemini (Google AI Studio) via SSE streaming API dengan multi-turn memory.
 
 Endpoint:
   POST https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse&key={GEMINI_API_KEY}
@@ -22,6 +22,7 @@ class GeminiAdapter(AgentAdapter):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
         self._client: httpx.AsyncClient | None = None
+        self._history: list[dict] = []
 
     @property
     def name(self) -> str:
@@ -42,27 +43,34 @@ class GeminiAdapter(AgentAdapter):
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:streamGenerateContent"
             f"?alt=sse&key={self.api_key}"
         )
-        body = {
-            "contents": [
+
+        system_instruction = {
+            "parts": [
                 {
-                    "parts": [
-                        {
-                            "text": (
-                                "Kamu adalah AI assistant yang diakses lewat smartwatch (Huawei Watch Fit 5). "
-                                "Jawab secara ringkas, jelas, lisan, dalam bahasa yang sama dengan pengguna (prioritas Indonesia), "
-                                "maksimal 2-3 kalimat, tanpa markdown atau formatting kode.\n\n"
-                                f"Pengguna: {prompt}"
-                            )
-                        }
-                    ]
+                    "text": (
+                        "Kamu adalah AI assistant yang diakses lewat smartwatch (Huawei Watch Fit 5). "
+                        "Jawab secara ringkas, jelas, lisan, dalam bahasa yang sama dengan pengguna (prioritas Indonesia), "
+                        "maksimal 2-3 kalimat, tanpa markdown atau formatting kode."
+                    )
                 }
-            ],
+            ]
+        }
+
+        # Sertakan riwayat 10 pesan terakhir (5 giliran tanya-jawab)
+        contents = list(self._history[-10:]) + [
+            {"role": "user", "parts": [{"text": prompt}]}
+        ]
+
+        body = {
+            "system_instruction": system_instruction,
+            "contents": contents,
             "generationConfig": {
                 "temperature": 0.6,
                 "maxOutputTokens": 200,
             },
         }
 
+        full_reply: list[str] = []
         try:
             async with client.stream("POST", url, json=body) as resp:
                 if resp.status_code != 200:
@@ -85,13 +93,20 @@ class GeminiAdapter(AgentAdapter):
                             for p in parts:
                                 text_piece = p.get("text", "")
                                 if text_piece:
+                                    full_reply.append(text_piece)
                                     yield text_piece
                     except json.JSONDecodeError:
                         continue
+
+            if full_reply:
+                self._history.append({"role": "user", "parts": [{"text": prompt}]})
+                self._history.append({"role": "model", "parts": [{"text": "".join(full_reply)}]})
+
         except Exception as e:
             log.warning("Gagal streaming dari Gemini: %s", e)
             yield "Terjadi kendala saat menghubungi Gemini."
 
     async def aclose(self) -> None:
+        self._history.clear()
         if self._client and not self._client.is_closed:
             await self._client.aclose()
