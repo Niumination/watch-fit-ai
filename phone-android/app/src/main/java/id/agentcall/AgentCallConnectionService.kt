@@ -1,7 +1,6 @@
 package id.agentcall
 
 import android.os.Bundle
-import android.telecom.CallAudioState
 import android.telecom.Connection
 import android.telecom.ConnectionRequest
 import android.telecom.ConnectionService
@@ -50,12 +49,6 @@ class AgentCallConnectionService : ConnectionService() {
         request: ConnectionRequest,
     ) {
         // Agent tidak tersedia / sesi ditolak: jangan biarkan jam berdering selamanya.
-    }
-
-    /** Tombol "Mute" pada layar panggilan jam. */
-    override fun onCallAudioStateChanged(state: CallAudioState) {
-        super.onCallAudioStateChanged(state)
-        VoiceSessionManager.setMuted(state.isMuted)
     }
 }
 
