@@ -1,6 +1,7 @@
 package id.agentcall
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -13,7 +14,6 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 /**
@@ -31,7 +31,7 @@ import androidx.core.content.ContextCompat
  * Cara menilai S7: tutup mic jam dengan jari saat merekam. Kalau level tidak turun
  * drastis, audio masih diambil dari mic HP → routing SCO salah.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private lateinit var out: TextView
     private lateinit var engine: SpikeEngine
