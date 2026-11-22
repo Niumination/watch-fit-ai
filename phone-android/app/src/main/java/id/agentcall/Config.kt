@@ -5,7 +5,7 @@ import java.util.UUID
 
 object Config {
     /** Ganti ke domainmu. WebSocket wajib wss:// (TLS). */
-    const val gatewayUrl: String = "wss://voice.domainmu.com/ws"
+    const val gatewayUrl: String = "wss://voice.abstract.biz.id/ws"
 
     /** Dipakai kalau user belum memilih agent. */
     const val defaultAgent: String = "echo"
