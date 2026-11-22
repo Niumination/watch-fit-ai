@@ -32,6 +32,21 @@ class WatchAudioRoute(private val ctx: Context) {
     fun open(): Boolean {
         am.mode = AudioManager.MODE_IN_COMMUNICATION
 
+        repeat(3) { attempt ->
+            if (tryOpenOnce()) {
+                // HFP wideband (mSBC) -> 16 kHz; narrowband (CVSD) -> tetap 8 kHz yang valid.
+                sampleRate = if (isWidebandSco()) 16_000 else 8_000
+                // Beri waktu radio untuk sinkron sebelum capture dibuka.
+                Thread.sleep(150)
+                return true
+            }
+            Log.w(TAG, "SCO attempt ${attempt + 1} gagal — retry 1 dtk (jam butuh call context)")
+            Thread.sleep(1000)
+        }
+        return false
+    }
+
+    private fun tryOpenOnce(): Boolean {
         if (Build.VERSION.SDK_INT >= 31) {
             val sco = am.availableCommunicationDevices.firstOrNull {
                 it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
@@ -46,12 +61,10 @@ class WatchAudioRoute(private val ctx: Context) {
             // tunggu ACTION_SCO_AUDIO_STATE_UPDATED == CONNECTED di production;
             // di sini kita beri jeda konservatif supaya AudioRecord tidak membuka mic HP.
             Thread.sleep(300)
+            return true
         }
 
         // HFP wideband (mSBC) -> 16 kHz; narrowband (CVSD) -> tetap 8 kHz yang valid.
-        sampleRate = if (isWidebandSco()) 16_000 else 8_000
-        // Beri waktu radio untuk sinkron sebelum capture dibuka.
-        Thread.sleep(150)
         return true
     }
 
