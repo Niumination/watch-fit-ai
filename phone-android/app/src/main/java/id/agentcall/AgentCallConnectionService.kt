@@ -29,7 +29,7 @@ class AgentCallConnectionService : ConnectionService() {
         conn.setAddress(request.address, TelecomManager.PRESENTATION_ALLOWED)
         conn.setInitializing()
         conn.setDialing()
-        VoiceSessionManager.start(conn, request.extras)
+        VoiceSessionManager.start(this, conn, request.extras)
         return conn
     }
 

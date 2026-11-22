@@ -42,10 +42,11 @@ object VoiceSessionManager {
 
     fun init(ctx: Context) { appCtx = ctx.applicationContext }
 
-    fun start(connection: AgentCallConnection, extras: Bundle?) {
+    fun start(ctx: Context, connection: AgentCallConnection, extras: Bundle?) {
         conn = connection
+        if (!::appCtx.isInitialized) appCtx = ctx.applicationContext
         val agent = extras?.getString("agent") ?: Config.defaultAgent
-        val gateway = extras?.getString("gateway") ?: Config.gatewayUrl   // wss://voice.domainmu.com/ws
+        val gateway = extras?.getString("gateway") ?: Config.gatewayUrl
 
         route = WatchAudioRoute(appCtx)
         if (!route!!.open()) {
