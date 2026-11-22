@@ -90,7 +90,7 @@ class SpikeEngine(
         runCatching { telecom.registerPhoneAccount(account) }
             .onSuccess { log("S3 · PhoneAccount didaftarkan. Aktifkan di pengaturan akun panggilan.") }
             .onFailure { log("S3 · FAIL registerPhoneAccount: ${it.message}") }
-        val enabled = runCatching { telecom.getPhoneAccount(handle)?.isEnabled }.getOrDefault(false)
+        val enabled = runCatching { telecom.getPhoneAccount(handle)?.isEnabled }.getOrNull() == true
         result("S3", enabled, "terdaftar, enabled=$enabled (kalau false: buka pengaturan akun panggilan)")
     }
 
@@ -164,7 +164,7 @@ class SpikeEngine(
             )
             if (rec.state != AudioRecord.STATE_INITIALIZED) {
                 result("S7", false, "AudioRecord tidak bisa init (rate=$rate)")
-                return@Thread
+                return@Runnable
             }
             val total = ShortArray(rate * ms / 1000)
             var offset = 0
