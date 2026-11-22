@@ -37,7 +37,7 @@ jobs:
           echo "ANDROID_SDK_ROOT=/usr/local/lib/android/sdk" >> $GITHUB_ENV
 
       - name: Generate Gradle wrapper
-        run: gradle wrapper --gradle-version 8.7
+        run: gradle wrapper --gradle-version 8.11
 
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --no-daemon
