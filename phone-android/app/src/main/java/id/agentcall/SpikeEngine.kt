@@ -151,7 +151,7 @@ class SpikeEngine(
 
     // ---------------------------------------------------------------- S7
     fun recordFromWatch(ms: Int) {
-        Thread {
+        Thread(Runnable {
             val rate = route?.sampleRate ?: 16_000
             val frame = rate / 10                                  // 100 ms
             val minBuf = AudioRecord.getMinBufferSize(
@@ -206,7 +206,7 @@ class SpikeEngine(
             track.write(total, 0, offset)
             track.stop(); track.release()
             log("S7 · pemutaran ulang selesai (seharusnya terdengar di jam).")
-        }, "spike-s7").start()
+        }).start()
     }
 
     // ---------------------------------------------------------------- all
