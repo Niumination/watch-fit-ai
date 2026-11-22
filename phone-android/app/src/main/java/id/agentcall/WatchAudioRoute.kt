@@ -10,6 +10,7 @@ import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.os.Build
+import android.util.Log
 import kotlin.math.abs
 
 /**
@@ -28,6 +29,10 @@ class WatchAudioRoute(private val ctx: Context) {
     private val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     var sampleRate: Int = 16_000
         private set
+
+    companion object {
+        private const val TAG = "AgentCall"
+    }
 
     fun open(): Boolean {
         am.mode = AudioManager.MODE_IN_COMMUNICATION
