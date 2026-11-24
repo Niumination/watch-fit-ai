@@ -79,12 +79,14 @@ object WearEngineHelper {
 
     /**
      * Kirim file (WAV jawaban) ke app lite di jam via Wear Engine file transfer.
-     * fileName mis. "jawab.wav" — jam simpan ke internal://app/ + putar via @system.audio.
+     * fileName mis. "jawab.wav" — jam terima, simpan internal://app/, putar @system.audio.
      */
-    fun sendFileToWatch(ctx: Context, bytes: ByteArray, fileName: String) {
+    fun sendFileToWatch(ctx: Context, bytes: ByteArray, fileName: String, onResult: ((Boolean, String?) -> Unit)? = null) {
+        if (!isSdkPresent()) { onResult?.invoke(false, "SDK tidak ada"); return }
         try {
             val hiWearClass = Class.forName("com.huawei.wearengine.HiWear")
-            val device = firstBondedDevice(ctx) ?: return
+            val device = firstBondedDevice(ctx)
+            if (device == null) { Log.w(TAG, "sendFileToWatch: tak ada jam ter-bonding"); onResult?.invoke(false, "tak ada jam"); return }
             val getFileClient = hiWearClass.getMethod("getFileClient", Context::class.java)
             val fileClient = getFileClient.invoke(null, ctx)
             val tmp = java.io.File(ctx.cacheDir, fileName)
@@ -96,10 +98,27 @@ object WearEngineHelper {
             val cbClass = Class.forName("com.huawei.wearengine.p2p.FileSendCallback")
             val proxy = java.lang.reflect.Proxy.newProxyInstance(
                 cbClass.classLoader, arrayOf(cbClass),
-                java.lang.reflect.InvocationHandler { _, _, _ -> null })
+                java.lang.reflect.InvocationHandler { _, method, args ->
+                    when (method?.name) {
+                        // onResult(resultCode) / onSuccess() — tanda file diterima jam
+                        "onResult", "onSuccess" -> {
+                            Log.i(TAG, "sendFileToWatch OK: ${args?.joinToString()}")
+                            onResult?.invoke(true, null)
+                        }
+                        // onError(code) / onFailure(code) — kirim gagal
+                        "onError", "onFailure" -> {
+                            Log.w(TAG, "sendFileToWatch GAGAL: code=${args?.joinToString()}")
+                            onResult?.invoke(false, args?.joinToString())
+                        }
+                        "onProgress" -> Log.d(TAG, "sendFileToWatch progress: ${args?.joinToString()}")
+                    }
+                    null
+                })
             sendFile.invoke(fileClient, device, tmp, proxy)
+            Log.i(TAG, "sendFileToWatch dimulai: ${tmp.name} (${bytes.size} B)")
         } catch (e: Throwable) {
             Log.w(TAG, "sendFileToWatch skipped: ${e.message}")
+            onResult?.invoke(false, e.message)
         }
     }
 

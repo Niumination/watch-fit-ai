@@ -2,8 +2,9 @@
  * App lite FIT 5 — remote control untuk app Android "AgentCall".
  *
  * PENTING (lihat docs/01-riset-dan-arsitektur.md §1.3):
- *   - Jam TIDAK punya API mic/audio/WebSocket. Semua suara lewat HFP ke HP.
- *   - App ini hanya: kirim perintah + tampilkan state/transkrip + getar.
+ *   - Jam TIDAK punya API mic/WebSocket. Semua suara lewat P2P Wear Engine.
+ *   - App ini: kirim perintah + tampilkan state/transkrip + getar +
+ *     TERIMA file jawaban (WAV) dari HP lalu putar di speaker jam.
  *   - Runtime JerryScript ES5.1: JANGAN pakai let/const, arrow function,
  *     template literal, Promise, class.
  */
@@ -15,18 +16,19 @@ import brightness from '@system.brightness';
 // Ganti dengan milikmu — kalau kosong, P2P tidak akan tersambung.
 var PHONE_CERT_FINGERPRINT = 'GANTI_DENGAN_FINGERPRINT_APP_ANDROID';
 
-var AGENTS = ['opencode', 'deepseek-harness', 'openmausbot', 'gemini'];
+var AGENTS = ['omb', 'opencode', 'gemini'];
 
 export default {
   data: {
     state: 'Siap',
-    agentLabel: 'opencode',
+    agentLabel: 'omb',
     agentIndex: 0,
     talkLabel: 'Bicara',
     transcript: '',
     connected: false,
     listening: false,
-    level: 0
+    level: 0,
+    audioSrc: ''
   },
 
   onInit: function () {
@@ -61,9 +63,50 @@ export default {
         } else if (typeof msg === 'string') {
           self.transcript = msg;
         }
+
+        // File jawaban dari HP: Wear Engine menandai isFileType.
+        // data.name = jalur internal, mis. "internal://app/jawab.wav"
+        var isFile = (data && typeof data === 'object' && data.isFileType) ||
+                     (data && typeof data === 'object' && data.name);
+        if (isFile) {
+          var path = (typeof data === 'object' && data.name) ? data.name : String(data);
+          self.setState('Menerima jawaban…');
+          self.playAnswer(path);
+        }
       }
     };
     this.client.registerReceiver(this.receiver);
+  },
+
+  // Putar WAV jawaban di speaker jam.
+  // Catatan Huawei: layanan musik di wearable harus memasukkan bundle app ke
+  // "control list" sebelum @system.audio boleh dipakai. Kalau onerror muncul,
+  // itu penyebabnya — lihat docs/06-jalur-c-hap.md §Batasan.
+  playAnswer: function (path) {
+    var self = this;
+    try {
+      var el = this.$element('$answer');
+      this.audioSrc = path;
+      // Penanganan error lewat event (try/catch tak menangkap onerror async).
+      el.onplay = function () { self.setState('Bicara…'); };
+      el.onended = function () { self.setState('Siap'); };
+      el.onerror = function (e) {
+        console.error('[AgentCall] audio onerror: ' + JSON.stringify(e));
+        self.setState('Audio ditolak jam');
+      };
+      el.stop();
+      el.src = path;
+      el.play();
+      self.setState('Memutar jawaban…');
+    } catch (e) {
+      console.error('[AgentCall] audio gagal: ' + e);
+      this.setState('Audio ditolak: ' + path);
+    }
+  },
+
+  stopAnswer: function () {
+    try { this.$element('$answer').stop(); } catch (e) { /* abaikan */ }
+    this.setState('Siap');
   },
 
   setState: function (v) {

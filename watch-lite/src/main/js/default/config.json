@@ -14,7 +14,8 @@
   "deviceConfig": {
     "default": {
       "permissions": [
-        "ohos.permission.INTERNET"
+        "ohos.permission.INTERNET",
+        "ohos.permission.MODIFY_AUDIO_SETTINGS"
       ]
     }
   },

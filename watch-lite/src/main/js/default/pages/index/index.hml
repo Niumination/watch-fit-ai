@@ -13,6 +13,8 @@
   </div>
 
   <div class="transcript" if="{{transcript}}">{{transcript}}</div>
+  <!-- Pemutar jawaban: src diisi saat file tiba dari HP (internal://app/...) -->
+  <audio id="answer" src="{{audioSrc}}" autoplay="false"></audio>
   <div class="hint" if="{{!connected}}">Buka app AgentCall di HP</div>
   <div class="level" if="{{listening}}">
     <div class="bar" style="width: {{level}}%;"></div>

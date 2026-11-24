@@ -70,7 +70,13 @@ class MainActivity : Activity() {
                     try {
                         val (wav, heard) = WatchVoiceRelay.askOnce(this@MainActivity, 8)
                         out.append("Didengar: $heard\nJawaban: ${wav.size} byte WAV → kirim ke jam.\n")
-                        WearEngineHelper.sendFileToWatch(this@MainActivity, wav, "jawab.wav")
+                        WearEngineHelper.sendFileToWatch(
+                            this@MainActivity, wav, "jawab.wav"
+                        ) { ok, err ->
+                            runOnUiThread {
+                                out.append(if (ok) "Kirim ke jam: OK\n" else "Kirim ke jam GAGAL: $err\n")
+                            }
+                        }
                         WatchBridge.pushState(this@MainActivity, "speaking")
                     } catch (e: Exception) {
                         out.append("Jalur A GAGAL: ${e.message}\n")
