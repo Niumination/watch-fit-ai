@@ -1,6 +1,13 @@
 {
-  "default": "opencode",
+  "default": "omb",
   "agents": [
+    {
+      "id": "omb",
+      "label": "openmausbot (ZB)",
+      "type": "omb",
+      "aliases": ["omb", "maus", "mausbot", "openmausbot", "zb"],
+      "hint": "bot ZB via relay-bridge; jawaban lisan Bahasa Indonesia"
+    },
     {
       "id": "opencode",
       "label": "opencode",

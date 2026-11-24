@@ -15,6 +15,7 @@ from .adapters.echo import EchoAgent
 from .adapters.gemini import GeminiAdapter
 from .adapters.http_generic import HttpAgentAdapter
 from .adapters.opencode import OpencodeAdapter
+from .adapters.omb import OmbAgent, build_from_env as omb_build_from_env
 
 log = logging.getLogger("gateway.registry")
 
@@ -99,6 +100,12 @@ def build(agent_id: str, path: str | None = None) -> AgentAdapter:
                 token=os.environ.get(env.get("token_env", ""), ""),
                 openai=bool(env.get("openai_compat", False)),
             )
+        if spec.type == "omb":
+            ag = omb_build_from_env()
+            if ag is not None:
+                return ag
+            log.warning("env OMB_BRIDGE_URL/OMB_WEBHOOK_ID/OMB_WEBHOOK_TOKEN belum diset; fallback echo")
+            return EchoAgent()
         if spec.type in ("gemini", "gemini_live"):
             api_key = os.environ.get("GEMINI_API_KEY", "")
             if not api_key:
