@@ -110,6 +110,61 @@ async def ask_audio(
     )
 
 
+def _to_mono_s16(raw: bytes, sampwidth: int, channels: int) -> bytes:
+    """Konversi PCM sembarang (1/2/4 byte, mono/stereo) -> s16le mono murni stdlib.
+
+    audioop dihapus di Python 3.13+, jadi konversi dibuat manual.
+    """
+    import array
+    if sampwidth == 2:
+        a = array.array("h")
+        a.frombytes(raw[: len(raw) - (len(raw) % 2)])
+        if a.itemsize != 2:
+            a.byteswap()
+        if channels >= 2 and len(a) >= 2:
+            mono = array.array("h")
+            for i in range(0, len(a) - 1, 2):
+                mono.append((a[i] + a[i + 1]) // 2)
+            return mono.tobytes()
+        return a.tobytes()
+    if sampwidth == 1:
+        a = array.array("B")
+        a.frombytes(raw)
+        out = array.array("h", ((b - 128) * 256 for b in a))
+        return out.tobytes()
+    if sampwidth == 4:
+        a = array.array("i")
+        a.frombytes(raw[: len(raw) - (len(raw) % 4)])
+        if a.itemsize != 4:
+            a.byteswap()
+        out = array.array("h", (max(-32768, min(32767, v >> 16)) for v in a))
+        return out.tobytes()
+    return raw
+
+
+def _resample_linear(raw: bytes, src_rate: int, dst_rate: int) -> bytes:
+    """Resampling linear sederhana (cukup untuk ASR; bukan kualitas hi-fi)."""
+    import array
+    a = array.array("h")
+    a.frombytes(raw[: len(raw) - (len(raw) % 2)])
+    if a.itemsize != 2:
+        a.byteswap()
+    n_in = len(a)
+    if n_in < 2 or src_rate == dst_rate:
+        return a.tobytes()
+    n_out = max(1, int(n_in * dst_rate / src_rate))
+    step = (n_in - 1) / (n_out - 1)
+    out = array.array("h")
+    for j in range(n_out):
+        pos = j * step
+        i = int(pos)
+        frac = pos - i
+        lo = a[i]
+        hi = a[min(i + 1, n_in - 1)]
+        out.append(int(lo + (hi - lo) * frac))
+    return out.tobytes()
+
+
 def _wav_to_pcm16(raw: bytes) -> tuple[bytes, int]:
     """Decode WAV/3GP/MP4 via ffmpeg bila ada, else WAV PCM langsung."""
     import io
@@ -123,13 +178,9 @@ def _wav_to_pcm16(raw: bytes) -> tuple[bytes, int]:
                 n = w.getnchannels()
                 samp = w.getsampwidth()
                 frames = w.readframes(w.getnframes())
-                import audioop
-                if n == 2:
-                    frames = audioop.tomono(frames, samp, 1, 1)
-                if samp != 2:
-                    frames = audioop.lin2lin(frames, samp, 2)
+                frames = _to_mono_s16(frames, samp, n)
                 if rate != 16_000:
-                    frames, _ = audioop.ratecv(frames, 2, 1, rate, 16_000, None)
+                    frames = _resample_linear(frames, rate, 16_000)
                     rate = 16_000
                 return frames, rate
         except Exception:
