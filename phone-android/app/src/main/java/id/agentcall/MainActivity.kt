@@ -59,6 +59,39 @@ class MainActivity : Activity() {
             text = "Buka panggilan self-managed (S4)"
             setOnClickListener { engine.placeSelfManagedCall() }
         }
+        val askAi = Button(this).apply {
+            text = "Jalur A: Tanya AI (mic HP 8 dtk)"
+            setOnClickListener {
+                out.append("Jalur A: merekam mic HP 8 dtk… bicara sekarang.\n")
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    try {
+                        val (wav, heard) = WatchVoiceRelay.askOnce(this@MainActivity, 8)
+                        out.append("Didengar: $heard\nJawaban: ${wav.size} byte WAV → kirim ke jam.\n")
+                        WearEngineHelper.sendFileToWatch(this@MainActivity, wav, "jawab.wav")
+                        WatchBridge.pushState(this@MainActivity, "speaking")
+                    } catch (e: Exception) {
+                        out.append("Jalur A GAGAL: ${e.message}\n")
+                    }
+                }
+            }
+        }
+        val setSecret = Button(this).apply {
+            text = "Isi device secret"
+            setOnClickListener {
+                val input = android.widget.EditText(this@MainActivity).apply {
+                    hint = "tempel device secret dari file"
+                }
+                android.app.AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Device secret")
+                    .setView(input)
+                    .setPositiveButton("Simpan") { _, _ ->
+                        TokenStore.setDeviceSecret(this@MainActivity, input.text.toString().trim())
+                        out.append("Secret tersimpan.\n")
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
+        }
         val settings = Button(this).apply {
             text = "Buka pengaturan akun panggilan"
             setOnClickListener {
@@ -71,7 +104,7 @@ class MainActivity : Activity() {
             setTextIsSelectable(true)          // supaya log bisa di-copy
         }
 
-        listOf(title, run, call, s7, settings, out).forEach {
+        listOf(title, run, call, s7, askAi, setSecret, settings, out).forEach {
             root.addView(it, LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
