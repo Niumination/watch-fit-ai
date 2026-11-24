@@ -21,6 +21,18 @@ def register_device(device_id: str, token: str) -> None:
     DEVICES[device_id] = _h(token)
 
 
+def _init_from_env() -> None:
+    """Isi DEVICES dari DEVICE_TOKENS='id:secret,id2:secret2' (produksi file-based)."""
+    for pair in os.environ.get("DEVICE_TOKENS", "").split(","):
+        if ":" in pair:
+            did, tok = pair.split(":", 1)
+            if did.strip() and tok.strip():
+                register_device(did.strip(), tok.strip())
+
+
+_init_from_env()
+
+
 def verify_device(device_id: str, token: str) -> bool:
     known = DEVICES.get(device_id)
     return bool(known) and hmac.compare_digest(known, _h(token))

@@ -17,8 +17,8 @@ import os
 import time
 from dataclasses import dataclass, field
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, UploadFile, File, Form
+from fastapi.responses import JSONResponse, Response
 
 from .adapters.base import AgentAdapter
 from .adapters.echo import EchoAgent
@@ -67,6 +67,102 @@ class Session:
 @app.get("/healthz")
 async def healthz():
     return {"ok": True}
+
+
+@app.post("/ask-audio")
+async def ask_audio(
+    audio: UploadFile = File(...),
+    device: str = Form(...),
+    token: str = Form(...),
+    agent: str = Form(""),
+):
+    """Jalur A: HP kirim WAV rekaman mic HP -> kembali WAV jawaban + teks.
+
+    Auth sama seperti WS (device + token). Ukuran maks ~2 MB (~60 dtk @16k mono).
+    """
+    if not auth.verify_device(device, token):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+    raw = await audio.read()
+    if len(raw) > 2_000_000:
+        return JSONResponse({"error": "file terlalu besar (maks 2 MB)"}, status_code=413)
+    pcm, rate = _wav_to_pcm16(raw)
+    if not pcm:
+        return JSONResponse({"error": "format audio tak dikenal (kirim WAV/3GP/MP4)"}, status_code=415)
+
+    text = await asr.transcribe(pcm, sample_rate=rate)
+    if not text.strip():
+        text = "(tidak terdengar — coba lagi lebih dekat ke mic HP)"
+
+    agent_name = agent or registry.default_agent()
+    ag = build_agent(agent_name, session_id=f"{device}-{int(time.time())}")
+    spoken: list[str] = []
+    try:
+        async for chunk in ag.stream(text):
+            spoken.append(chunk)
+    finally:
+        await ag.aclose()
+    full = formatter.for_speech(" ".join(spoken).strip()) or "Maaf, agent tidak menjawab."
+    wav = await _pcm_text_to_wav(full)
+    return Response(
+        content=wav,
+        media_type="audio/wav",
+        headers={"X-Transcript-In": text[:500], "X-Transcript-Out": full[:900]},
+    )
+
+
+def _wav_to_pcm16(raw: bytes) -> tuple[bytes, int]:
+    """Decode WAV/3GP/MP4 via ffmpeg bila ada, else WAV PCM langsung."""
+    import io
+    import shutil
+    import subprocess
+    import wave
+    if raw[:4] == b"RIFF" and raw[8:12] == b"WAVE":
+        try:
+            with wave.open(io.BytesIO(raw), "rb") as w:
+                rate = w.getframerate()
+                n = w.getnchannels()
+                samp = w.getsampwidth()
+                frames = w.readframes(w.getnframes())
+                import audioop
+                if n == 2:
+                    frames = audioop.tomono(frames, samp, 1, 1)
+                if samp != 2:
+                    frames = audioop.lin2lin(frames, samp, 2)
+                if rate != 16_000:
+                    frames, _ = audioop.ratecv(frames, 2, 1, rate, 16_000, None)
+                    rate = 16_000
+                return frames, rate
+        except Exception:
+            pass
+    if shutil.which("ffmpeg") is None:
+        return b"", 0
+    try:
+        p = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0",
+             "-ac", "1", "-ar", "16000", "-f", "s16le", "pipe:1"],
+            input=raw, capture_output=True, timeout=30)
+        if p.returncode != 0 or not p.stdout:
+            return b"", 0
+        return p.stdout, 16_000
+    except Exception:
+        return b"", 0
+
+
+async def _pcm_text_to_wav(text: str) -> bytes:
+    """TTS sesuai backend aktif -> WAV 16k mono (format jam-friendly)."""
+    import io
+    import wave
+    chunks: list[bytes] = []
+    async for pcm in tts.stream_pcm16(text, sample_rate=16_000):
+        chunks.append(pcm)
+    pcm = b"".join(chunks) or b"\x00" * 16_000
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(16_000)
+        w.writeframes(pcm)
+    return buf.getvalue()
 
 
 @app.get("/rtc/token")
