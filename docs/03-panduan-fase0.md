@@ -7,6 +7,37 @@ Waktu: ±3–4 jam (banyak menunggu pairing & update). Alat: HP Android + FIT 5 
 
 ---
 
+## STATUS SEKARANG (24 Nov 2026)
+
+Ringkasan untuk yang tak mau membaca 227 baris. Detail & bukti ada di bawah.
+
+| Bagian | Status |
+|--------|--------|
+| Rekam mic HP -> gateway (`POST /ask-audio` -> 200) | PASS |
+| Auth device (ANDROID_ID, stabil lintas reinstall) | PASS |
+| ASR Groq | PASS |
+| Agent OMB (OpenMausBot — jawaban AI sungguhan) | PASS |
+| TTS piper Indonesia | PASS (**SELESAI**) |
+| Latensi end-to-end | ±11,5 dtk |
+| Putar jawaban di speaker jam | **MENUNGGU** (build HAP + signing) |
+| Sideload HAP ke Fit 5 | BELUM |
+| `@system.audio` lolos control list musik | **UNCHECKED** |
+| Jalur B (layar panggilan / SCO dari HP) | **GUGUR** di Infinix X6873 |
+
+- **PASS**: pipa audio HP -> gateway terbukti ujung-ke-ujung; TTS piper menghasilkan
+  WAV sungguhan (450.324 byte / 14,07 s / 16 kHz mono), bukan nada pengganti.
+- **MENUNGGU**: pemutaran jawaban di speaker jam. Kode pemutar **sudah ada**
+  (`watch-lite/index.js`, `index.hml`, `config.json`; commit `9168ede`). Yang tersisa
+  = build HAP + signing Huawei + uji di perangkat. Lihat `docs/06-jalur-c-hap.md` (langkah 3).
+- **GUGUR**: Jalur B di perangkat uji — SCO ditolak OS, layar panggilan app ditolak Telecom.
+- **Langkah berikutnya**: build & sideload HAP, lalu uji berurutan (jam terima file -> jam bersuara).
+- Catatan platform: Huawei mensyaratkan bundle app masuk control list layanan musik
+  sebelum `@system.audio` boleh dipakai; status kelulusannya **UNCHECKED**.
+- Kenapa agent `opencode` diganti OMB: adapter opencode terbukti tidak cocok dengan
+  OpenCode modern (prefix `/api`, HTTP Basic, `POST /session` 405) — lihat `docs/05-opencode-integration.md`.
+
+---
+
 ## Tes 1 — Jam benar-benar jadi "headset", bukan cuma perangkat Health (15 menit)
 
 1. Huawei Health → Devices → pastikan ter-pair. Lalu buka **Settings → Bluetooth** di HP:
@@ -183,7 +214,7 @@ latensi jaringanmu, dan menyiapkan adapter agent yang kamu pakai sehari-hari.
 | Auth device (ANDROID_ID) | PASS | `and-78ed6a33`, stabil lintas reinstall |
 | ASR Groq | PASS | `x-transcript-in: Jamur apa yang bisa dimakan?` |
 | **Agent OMB (OpenMausBot, bot ZB)** | **PASS** | `x-transcript-out` = jawaban jamur edible, kalimat utuh |
-| TTS piper Indonesia | PASS | WAV 14.07 s / 16 kHz mono / 450 KB |
+| TTS piper Indonesia | PASS | WAV 450.324 byte / 14,07 s / 16 kHz mono |
 | Latensi end-to-end | ±11.5 dtk | ukur dari Mac ke endpoint publik |
 
 Jawaban yang diterima (bukan klaim pelaksana — diuji ulang dari Mac):
@@ -196,6 +227,10 @@ Catatan operasional: adapter `omb.py` menembak relay-bridge lewat
 `wh_knBDiZz4DGRydSZi`). Konsekuensi yang sudah disadari: pertanyaan jam masuk
 ke bot ZbmausHumanoid-Vercel dan bisa muncul juga di situs humanoid.
 
+Kenapa OMB, bukan opencode: agent default sempat `opencode`, tapi adapter-nya terbukti
+tidak cocok dengan OpenCode modern (`POST /session` -> 405, API di bawah prefix `/api`,
+auth HTTP Basic). Detail temuan & langkah perbaikan ada di `docs/05-opencode-integration.md`.
+
 ## Hasil Jalur A — 24 Nov 2026 (mic HP -> gateway -> WAV)
 
 | Tahap | Status | Bukti |
@@ -206,11 +241,21 @@ ke bot ZbmausHumanoid-Vercel dan bisa muncul juga di situs humanoid.
 | ASR Groq | PASS | `X-Transcript-In: Terima kasih telah menonton!` |
 | Agent echo | PASS | transkrip jawaban terisi |
 | TTS | DEGRADASI (aman) | piper tak terpasang + edge_tts 403 -> nada pengganti 880 Hz; request tetap 200, bukan 500 |
-| WAV balik ke HP | PASS | 11.244 byte RIFF 16 kHz mono |
-| Putar di speaker jam via P2P | BELUM | butuh HAP liteWearable (`@system.audio`) + signing |
+| WAV balik ke HP | PASS | fase nada pengganti: 11.244 byte RIFF 16 kHz mono |
+| Putar di speaker jam via P2P | MENUNGGU | Kode pemutar **SUDAH ADA**: `watch-lite/index.js`, `index.hml`, `config.json` (commit `9168ede`). Sisa = build HAP + signing + uji — lihat `docs/06-jalur-c-hap.md` (langkah 3). |
+| `@system.audio` lolos control list musik | UNCHECKED | bundle app belum terbukti masuk control list layanan musik; kalau `onerror`, itu batas platform |
 
-Kesimpulan: pipa audio HP->gateway terbukti. Dua item terbuka: TTS sungguhan
-(model piper atau kunci OpenAI/Gemini) dan HAP pemutar di jam.
+Angka WAV dibedakan dua fase:
+
+| Fase | Ukuran | Ket |
+|------|--------|-----|
+| Nada pengganti (Jalur A, piper belum terpasang) | 11.244 byte | 880 Hz, RIFF 16 kHz mono |
+| Piper sungguhan (jalur AI via OMB) | 450.324 byte / 14,07 s | 16 kHz mono |
+
+Kesimpulan: pipa audio HP->gateway terbukti. **TTS piper SELESAI** (WAV sungguhan,
+bukan nada pengganti). Satu item tersisa: pemutaran jawaban di speaker jam,
+**MENUNGGU build HAP + signing Huawei** — kode pemutarnya sudah ada, tinggal
+build, sideload, dan uji berurutan (`docs/06-jalur-c-hap.md`).
 
 ## Hasil aktual — 23 Nov 2026 (Infinix X6873 + Watch Fit 5 HarmonyOS 6.1.0.125)
 
