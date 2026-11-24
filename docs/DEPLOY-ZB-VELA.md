@@ -98,6 +98,28 @@ docker compose down && docker compose up -d gateway   # restart
 
 Jangan commit `.env` ke git. Jangan expose port agent (opencode/4096) ke internet.
 
+## 6. Update kode (tiap ada commit baru — mis. endpoint /ask-audio Jalur A)
+
+Jalankan di VPS (via Hermes agent di sana), `.env` dan data device TETAP
+(tidak tersentuh karena `git pull` tidak mengubah file tak-terlacak):
+
+```bash
+cd ~/zb/voice-gateway
+git pull origin main
+cd gateway
+docker compose build gateway
+docker compose up -d gateway
+sleep 5
+docker logs --tail 20 voice-gateway-gateway-1   # harus "Application startup complete"
+./tools/run_selftest.sh                          # harus 5/5 PASS
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://voice.abstract.biz.id/ask-audio
+# harus 422 (endpoint ADA tapi body kosong) — bukan 404
+```
+
+Catatan: `404` = kode lama, `422` = endpoint baru sudah hidup (hanya validasi input).
+Bila `./tools/run_selftest.sh` belum ada di VPS, ganti dengan
+`curl -s https://voice.abstract.biz.id/health` (harus `{"ok":true}`).
+
 ## Port yang dipakai
 
 | Komponen | Port host | Publik via |
