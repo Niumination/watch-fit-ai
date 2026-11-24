@@ -77,6 +77,53 @@ object WearEngineHelper {
         }
     }
 
+    /**
+     * Kirim file (WAV jawaban) ke app lite di jam via Wear Engine file transfer.
+     * fileName mis. "jawab.wav" — jam simpan ke internal://app/ + putar via @system.audio.
+     */
+    fun sendFileToWatch(ctx: Context, bytes: ByteArray, fileName: String) {
+        try {
+            val hiWearClass = Class.forName("com.huawei.wearengine.HiWear")
+            val device = firstBondedDevice(ctx) ?: return
+            val getFileClient = hiWearClass.getMethod("getFileClient", Context::class.java)
+            val fileClient = getFileClient.invoke(null, ctx)
+            val tmp = java.io.File(ctx.cacheDir, fileName)
+            tmp.writeBytes(bytes)
+            val sendFile = fileClient.javaClass.getMethod(
+                "sendFile", Class.forName("com.huawei.wearengine.device.Device"),
+                java.io.File::class.java,
+                Class.forName("com.huawei.wearengine.p2p.FileSendCallback"))
+            val cbClass = Class.forName("com.huawei.wearengine.p2p.FileSendCallback")
+            val proxy = java.lang.reflect.Proxy.newProxyInstance(cbClass.classLoader, arrayOf(cbClass)) { _, _ -> null }
+            sendFile.invoke(fileClient, device, tmp, proxy)
+        } catch (e: Throwable) {
+            Log.w(TAG, "sendFileToWatch skipped: ${e.message}")
+        }
+    }
+
+    private fun firstBondedDevice(ctx: Context): Any? {
+        return try {
+            val hiWearClass = Class.forName("com.huawei.wearengine.HiWear")
+            val deviceClient = hiWearClass.getMethod("getDeviceClient", Context::class.java).invoke(null, ctx)
+            val task = deviceClient.javaClass.getMethod("getBondedDevices").invoke(deviceClient)
+            var result: Any? = null
+            val latch = java.util.concurrent.CountDownLatch(1)
+            val listenerClass = Class.forName("com.huawei.hmf.tasks.OnSuccessListener")
+            val proxy = java.lang.reflect.Proxy.newProxyInstance(listenerClass.classLoader, arrayOf(listenerClass)) { _, _, args ->
+                val devices = args?.get(0) as? List<*> ?: emptyList<Any>()
+                if (devices.isNotEmpty()) result = devices[0]
+                latch.countDown()
+                null
+            }
+            deviceClient.javaClass.getMethod("getBondedDevices")
+            task.javaClass.getMethod("addOnSuccessListener", listenerClass).invoke(task, proxy)
+            latch.await(5, java.util.concurrent.TimeUnit.SECONDS)
+            result
+        } catch (e: Throwable) {
+            null
+        }
+    }
+
     private fun sendP2p(ctx: Context, device: Any?, jsonMessage: String) {
         if (device == null) return
         try {

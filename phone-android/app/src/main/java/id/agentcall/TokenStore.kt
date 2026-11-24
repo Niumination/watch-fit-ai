@@ -18,6 +18,9 @@ object TokenStore {
     fun setDeviceSecret(ctx: Context, secret: String) =
         prefs(ctx).edit().putString("device_secret", secret).apply()
 
+    fun getDeviceSecret(ctx: Context): String =
+        prefs(ctx).getString("device_secret", "") ?: ""
+
     @Volatile private var cached: String? = null
     @Volatile private var expiresAt: Long = 0
 
