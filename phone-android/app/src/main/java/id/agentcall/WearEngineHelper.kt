@@ -54,7 +54,7 @@ object WearEngineHelper {
             val addOnSuccessMethod = task.javaClass.getMethod("addOnSuccessListener", Class.forName("com.huawei.hmf.tasks.OnSuccessListener"))
 
             val proxyHandler = java.lang.reflect.InvocationHandler { _, method, args ->
-                if (method.name == "onSuccess") {
+                if (method?.name == "onSuccess") {
                     val devices = args?.get(0) as? List<*> ?: emptyList<Any>()
                     if (devices.isNotEmpty()) {
                         val targetDevice = devices[0]
@@ -94,7 +94,9 @@ object WearEngineHelper {
                 java.io.File::class.java,
                 Class.forName("com.huawei.wearengine.p2p.FileSendCallback"))
             val cbClass = Class.forName("com.huawei.wearengine.p2p.FileSendCallback")
-            val proxy = java.lang.reflect.Proxy.newProxyInstance(cbClass.classLoader, arrayOf(cbClass)) { _, _ -> null }
+            val proxy = java.lang.reflect.Proxy.newProxyInstance(
+                cbClass.classLoader, arrayOf(cbClass),
+                java.lang.reflect.InvocationHandler { _, _, _ -> null })
             sendFile.invoke(fileClient, device, tmp, proxy)
         } catch (e: Throwable) {
             Log.w(TAG, "sendFileToWatch skipped: ${e.message}")
@@ -109,12 +111,14 @@ object WearEngineHelper {
             var result: Any? = null
             val latch = java.util.concurrent.CountDownLatch(1)
             val listenerClass = Class.forName("com.huawei.hmf.tasks.OnSuccessListener")
-            val proxy = java.lang.reflect.Proxy.newProxyInstance(listenerClass.classLoader, arrayOf(listenerClass)) { _, _, args ->
-                val devices = args?.get(0) as? List<*> ?: emptyList<Any>()
-                if (devices.isNotEmpty()) result = devices[0]
-                latch.countDown()
-                null
-            }
+            val proxy = java.lang.reflect.Proxy.newProxyInstance(
+                listenerClass.classLoader, arrayOf(listenerClass),
+                java.lang.reflect.InvocationHandler { _, method, args ->
+                    val devices = args?.get(0) as? List<*> ?: emptyList<Any>()
+                    if (devices.isNotEmpty()) result = devices[0]
+                    latch.countDown()
+                    null
+                })
             deviceClient.javaClass.getMethod("getBondedDevices")
             task.javaClass.getMethod("addOnSuccessListener", listenerClass).invoke(task, proxy)
             latch.await(5, java.util.concurrent.TimeUnit.SECONDS)
@@ -154,13 +158,13 @@ object WearEngineHelper {
             val callbackClass = Class.forName("com.huawei.wearengine.p2p.SendCallback")
             val cbProxy = java.lang.reflect.Proxy.newProxyInstance(
                 callbackClass.classLoader,
-                arrayOf(callbackClass)
-            ) { _, method, args ->
-                if (method.name == "onSendResult") {
-                    Log.d(TAG, "Wear Engine onSendResult: ${args?.get(0)}")
-                }
-                null
-            }
+                arrayOf(callbackClass),
+                java.lang.reflect.InvocationHandler { _, method, args ->
+                    if (method?.name == "onSendResult") {
+                        Log.d(TAG, "Wear Engine onSendResult: ${args?.get(0)}")
+                    }
+                    null
+                })
 
             sendMethod.invoke(p2pClient, device, messageObj, cbProxy)
         } catch (e: Throwable) {
