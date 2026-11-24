@@ -175,6 +175,22 @@ Supaya iterasi berikutnya tepat sasaran, kirim:
 Dari data itu saya bisa: mengunci setelan `rate` & AEC, memilih TTS/ASR yang tepat untuk
 latensi jaringanmu, dan menyiapkan adapter agent yang kamu pakai sehari-hari.
 
+## Hasil Jalur A — 24 Nov 2026 (mic HP -> gateway -> WAV)
+
+| Tahap | Status | Bukti |
+|-------|--------|-------|
+| Rekam mic HP 8 dtk (MediaRecorder AAC 16k) | PASS | tombol "Jalur A" di app, izin RECORD_AUDIO granted |
+| Kirim WAV/MP4 ke `https://voice.abstract.biz.id/ask-audio` | PASS | logcat `askOnce: POST ... -> 200` |
+| Auth device | PASS | `device_id` stabil dari ANDROID_ID (`and-78ed6a33`), terdaftar di VPS |
+| ASR Groq | PASS | `X-Transcript-In: Terima kasih telah menonton!` |
+| Agent echo | PASS | transkrip jawaban terisi |
+| TTS | DEGRADASI (aman) | piper tak terpasang + edge_tts 403 -> nada pengganti 880 Hz; request tetap 200, bukan 500 |
+| WAV balik ke HP | PASS | 11.244 byte RIFF 16 kHz mono |
+| Putar di speaker jam via P2P | BELUM | butuh HAP liteWearable (`@system.audio`) + signing |
+
+Kesimpulan: pipa audio HP->gateway terbukti. Dua item terbuka: TTS sungguhan
+(model piper atau kunci OpenAI/Gemini) dan HAP pemutar di jam.
+
 ## Hasil aktual — 23 Nov 2026 (Infinix X6873 + Watch Fit 5 HarmonyOS 6.1.0.125)
 
 | # | Tes | Hasil | Bukti |
