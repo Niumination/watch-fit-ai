@@ -89,7 +89,12 @@ async def ask_audio(
     if not pcm:
         return JSONResponse({"error": "format audio tak dikenal (kirim WAV/3GP/MP4)"}, status_code=415)
 
-    text = await asr.transcribe(pcm, sample_rate=rate)
+    try:
+        text = await asr.transcribe(pcm, sample_rate=rate)
+    except Exception as exc:
+        import logging
+        logging.getLogger("gateway.main").warning("ASR gagal (%s)", exc)
+        text = ""
     if not text.strip():
         text = "(tidak terdengar — coba lagi lebih dekat ke mic HP)"
 
@@ -199,14 +204,32 @@ def _wav_to_pcm16(raw: bytes) -> tuple[bytes, int]:
         return b"", 0
 
 
+def _tone_beep() -> bytes:
+    """Nada 880 Hz 300 ms + hentian, sebagai bukti audio terkirim bila TTS mati."""
+    import math
+    n = int(16_000 * 0.3)
+    frames = bytearray()
+    for i in range(n):
+        v = int(9000 * math.sin(2 * math.pi * 880 * i / 16_000))
+        frames += v.to_bytes(2, "little", signed=True)
+    return bytes(frames) + b"\x00" * int(16_000 * 0.1)
+
+
 async def _pcm_text_to_wav(text: str) -> bytes:
     """TTS sesuai backend aktif -> WAV 16k mono (format jam-friendly)."""
     import io
     import wave
     chunks: list[bytes] = []
-    async for pcm in tts.stream_pcm16(text, sample_rate=16_000):
-        chunks.append(pcm)
-    pcm = b"".join(chunks) or b"\x00" * 16_000
+    try:
+        async for pcm in tts.stream_pcm16(text, sample_rate=16_000):
+            if pcm:
+                chunks.append(pcm)
+    except Exception as exc:
+        # Backend TTS mati (piper tak terpasang / edge 403 / kunci habis) —
+        # jangan bikin whole request 500; kirim nada pengganti + transkrip tetap ada.
+        import logging
+        logging.getLogger("gateway.main").warning("TTS gagal (%s); pakai nada pengganti", exc)
+    pcm = b"".join(chunks) or _tone_beep()
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)
