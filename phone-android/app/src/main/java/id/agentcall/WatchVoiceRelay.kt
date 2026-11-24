@@ -50,7 +50,7 @@ object WatchVoiceRelay {
             .addFormDataPart("token", secret)
             .addFormDataPart("agent", agent)
             .addFormDataPart(
-                "audio", out.name,
+                "audio", wavIn.name,
                 wavIn.asRequestBody("audio/mp4".toMediaType()))
             .build()
         val req = Request.Builder()
