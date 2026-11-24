@@ -69,6 +69,12 @@ async def healthz():
     return {"ok": True}
 
 
+@app.get("/health")
+async def health():
+    """Alias /healthz (dipakai Cloudflare/monitor yang menembak /health)."""
+    return {"ok": True}
+
+
 @app.post("/ask-audio")
 async def ask_audio(
     audio: UploadFile = File(...),
@@ -92,20 +98,32 @@ async def ask_audio(
     try:
         text = await asr.transcribe(pcm, sample_rate=rate)
     except Exception as exc:
-        import logging
         logging.getLogger("gateway.main").warning("ASR gagal (%s)", exc)
         text = ""
     if not text.strip():
         text = "(tidak terdengar — coba lagi lebih dekat ke mic HP)"
 
     agent_name = agent or registry.default_agent()
-    ag = build_agent(agent_name, session_id=f"{device}-{int(time.time())}")
+    try:
+        ag = build_agent(agent_name, session_id=f"{device}-{int(time.time())}")
+    except Exception as exc:
+        # Agent default mati (mis. OPENCODE_URL tak ada) — jangan 500 ke HP;
+        # balas dengan echo supaya jalur audio tetap terbukti.
+        logging.getLogger("gateway.main").warning(
+            "agent '%s' gagal dibangun (%s); pakai echo", agent_name, exc)
+        from .registry import EchoAgent
+        ag = EchoAgent()
     spoken: list[str] = []
     try:
         async for chunk in ag.stream(text):
             spoken.append(chunk)
+    except Exception as exc:
+        logging.getLogger("gateway.main").warning("agent stream gagal (%s)", exc)
     finally:
-        await ag.aclose()
+        try:
+            await ag.aclose()
+        except Exception:
+            pass
     full = formatter.for_speech(" ".join(spoken).strip()) or "Maaf, agent tidak menjawab."
     wav = await _pcm_text_to_wav(full)
     return Response(
@@ -227,7 +245,6 @@ async def _pcm_text_to_wav(text: str) -> bytes:
     except Exception as exc:
         # Backend TTS mati (piper tak terpasang / edge 403 / kunci habis) —
         # jangan bikin whole request 500; kirim nada pengganti + transkrip tetap ada.
-        import logging
         logging.getLogger("gateway.main").warning("TTS gagal (%s); pakai nada pengganti", exc)
     pcm = b"".join(chunks) or _tone_beep()
     buf = io.BytesIO()
