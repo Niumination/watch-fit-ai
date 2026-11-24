@@ -50,14 +50,15 @@ object WatchVoiceRelay {
             .addFormDataPart("token", secret)
             .addFormDataPart("agent", agent)
             .addFormDataPart(
-                "audio", "tanya.wav",
-                wavIn.asRequestBody("audio/wav".toMediaType()))
+                "audio", out.name,
+                wavIn.asRequestBody("audio/mp4".toMediaType()))
             .build()
         val req = Request.Builder()
             .url(Config.gatewayUrl.replaceFirst("wss://", "https://").replaceFirst("/ws", "/ask-audio"))
             .post(body)
             .build()
         val resp = http.newCall(req).execute()
+        Log.i(TAG, "askOnce: POST ${req.url} -> ${resp.code}")
         resp.use {
             if (!it.isSuccessful) throw IllegalStateException("gateway ${it.code}: ${it.body?.string()?.take(200)}")
             val out = it.body?.bytes() ?: byteArrayOf()
