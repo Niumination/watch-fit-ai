@@ -175,6 +175,27 @@ Supaya iterasi berikutnya tepat sasaran, kirim:
 Dari data itu saya bisa: mengunci setelan `rate` & AEC, memilih TTS/ASR yang tepat untuk
 latensi jaringanmu, dan menyiapkan adapter agent yang kamu pakai sehari-hari.
 
+## Hasil — 24 Nov 2026 (jalur AI sungguhan via OMB)
+
+| Tahap | Status | Bukti |
+|-------|--------|-------|
+| Rekam mic HP + kirim ke gateway | PASS | logcat `askOnce: POST .../ask-audio -> 200` |
+| Auth device (ANDROID_ID) | PASS | `and-78ed6a33`, stabil lintas reinstall |
+| ASR Groq | PASS | `x-transcript-in: Jamur apa yang bisa dimakan?` |
+| **Agent OMB (OpenMausBot, bot ZB)** | **PASS** | `x-transcript-out` = jawaban jamur edible, kalimat utuh |
+| TTS piper Indonesia | PASS | WAV 14.07 s / 16 kHz mono / 450 KB |
+| Latensi end-to-end | ±11.5 dtk | ukur dari Mac ke endpoint publik |
+
+Jawaban yang diterima (bukan klaim pelaksana — diuji ulang dari Mac):
+> Beberapa jamur yang aman dimakan antara lain jamur merang, jamur kancing,
+> jamur shiitake, dan jamur champignon. Hindari mengumpulkan jamur liar
+> sendiri karena banyak jenis beracun yang mirip dengan yang edible.
+
+Catatan operasional: adapter `omb.py` menembak relay-bridge lewat
+`http://172.18.0.1:8801` (listener tambahan, webhook humanoid
+`wh_knBDiZz4DGRydSZi`). Konsekuensi yang sudah disadari: pertanyaan jam masuk
+ke bot ZbmausHumanoid-Vercel dan bisa muncul juga di situs humanoid.
+
 ## Hasil Jalur A — 24 Nov 2026 (mic HP -> gateway -> WAV)
 
 | Tahap | Status | Bukti |
