@@ -174,3 +174,17 @@ Supaya iterasi berikutnya tepat sasaran, kirim:
 
 Dari data itu saya bisa: mengunci setelan `rate` & AEC, memilih TTS/ASR yang tepat untuk
 latensi jaringanmu, dan menyiapkan adapter agent yang kamu pakai sehari-hari.
+
+## Hasil aktual — 23 Nov 2026 (Infinix X6873 + Watch Fit 5 HarmonyOS 6.1.0.125)
+
+| # | Tes | Hasil | Bukti |
+|---|-----|-------|-------|
+| 1 | HFP headset | **PASS bersyarat** | Jam→HP & panggilan masuk: dua arah via HFP OK (angkat dari jam, tanpa sentuh HP). HP→jam: SCO ditolak OS (toggle Phone calls terkunci, `availableCommunicationDevices` tanpa SCO, retry 3x gagal). |
+| 2 | Layar panggilan app pihak ketiga | **FAIL (perangkat)** | `placeCall()` → Telecom ERROR; `route.open()` false → `setDisconnected(ERROR)`. Bukan bug app (5 fix CI hijau). |
+| 3 | Route SCO | **FAIL (perangkat)** | `SCO_STATE_INACTIVE`; satu jejak SCO ke C5:5F 1 detik lalu putus (jam tolak SCO yatim). |
+| 4 | Codec | **UNCHECKED** | SCO tak pernah stabil; flag `hfpCodecAptxVoice` aktif = wideband didukung. |
+| 5 | Gateway VPS | **PASS** | `voice.abstract.biz.id/health` 200, selftest 5/5, token+WS handshake OK. |
+| 6 | Sideload HAP | **BELUM** | Jalur C berikutnya. |
+
+**Kesimpulan:** Jalur B gugur di Infinix X6873 (HFP searah jam→HP saja).
+Audio fisik dua arah sehat. Lanjut Jalur C (HAP file-transfer via Wear Engine P2P).
