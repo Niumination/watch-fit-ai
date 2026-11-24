@@ -15,6 +15,9 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * SPIKE Phase 0 — "apakah jam bisa dipakai sebagai mic+speaker untuk sesi AI?"
@@ -63,7 +66,7 @@ class MainActivity : Activity() {
             text = "Jalur A: Tanya AI (mic HP 8 dtk)"
             setOnClickListener {
                 out.append("Jalur A: merekam mic HP 8 dtk… bicara sekarang.\n")
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                CoroutineScope(Dispatchers.Main).launch {
                     try {
                         val (wav, heard) = WatchVoiceRelay.askOnce(this@MainActivity, 8)
                         out.append("Didengar: $heard\nJawaban: ${wav.size} byte WAV → kirim ke jam.\n")
