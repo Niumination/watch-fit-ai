@@ -43,9 +43,9 @@ async def _synth_wav(text: str) -> bytes:
         return _tone_wav(min(3.0, 0.4 + len(text) / 40.0))
     if backend == "openai":
         return await _openai(text)
-    if backend == "piper" and shutil.which("piper"):
+    if backend == "piper" and os.path.exists(os.environ.get("PIPER_MODEL", "/models/id_ID-news.onnx")):
         return await _piper(text)
-    if backend in ("edge", "piper"):
+    if backend == "edge":
         return await _edge(text)
     if backend == "gemini":
         return await _gemini(text)
@@ -74,13 +74,29 @@ async def _openai(text: str) -> bytes:
 
 
 async def _piper(text: str) -> bytes:
-    model = os.environ.get("PIPER_MODEL", "")
-    proc = await asyncio.create_subprocess_exec(
-        "piper", "--model", model, "--output_file", "-",
-        stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-    )
-    out, _ = await proc.communicate(text.encode())
-    return out
+    """Piper self-host (in-proses, tanpa binary eksternal).
+
+    Model: models/id_ID-news.onnx (unduh dengan tools/fetch-piper-model.sh).
+    """
+    import io
+    import wave as _wave
+    model = os.environ.get("PIPER_MODEL", "/models/id_ID-news.onnx")
+    if not os.path.exists(model):
+        log.warning("model piper tidak ada di %s; jalankan tools/fetch-piper-model.sh", model)
+        return _tone_wav(0.5)
+
+    def _gen() -> bytes:
+        from piper import PiperVoice
+        voice = PiperVoice.load(model)
+        buf = io.BytesIO()
+        with _wave.open(buf, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(voice.config.sample_rate)
+            voice.synthesize(text, w)
+        return buf.getvalue()
+
+    return await asyncio.to_thread(_gen)
 
 
 async def _edge(text: str) -> bytes:
