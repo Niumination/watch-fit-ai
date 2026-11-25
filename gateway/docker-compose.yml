@@ -3,7 +3,7 @@ services:
     build: .
     restart: unless-stopped
     env_file: .env
-    expose: ["8080"]
+    ports: ["127.0.0.1:8091:8080"]
     volumes:
       - ./models:/models:ro
     # CPU 2 vCPU cukup untuk ~3 sesi paralel (VAD + whisper small + piper)
